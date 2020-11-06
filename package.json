@@ -1,0 +1,32 @@
+{
+  "name": "pipedrivetest",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test.js",
+  "scripts": {
+    "email": "node src/scrub/email.js",
+    "scrub-ca": "node src/scrub/index.js CA",
+    "leads-ca": "node src/leads/index.js CA",
+    "assign-ca": "node src/assignment/index.js CA",
+    "scrub-us": "node src/scrub/index.js US",
+    "leads-us": "node src/leads/index.js US",
+    "assign-us": "node src/assignment/index.js US",
+    "us": "node src/scrub/index.js US;node src/leads/index.js US;node src/assignment/index.js US",
+    "ca": "node src/scrub/index.js CA;node src/leads/index.js CA;node src/assignment/index.js CA",
+    "test": "mocha src/test/**/*"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chai": "^4.2.0",
+    "csv-parser": "^2.3.3",
+    "csv-writer": "^1.6.0",
+    "lodash": "^4.17.20",
+    "luxon": "^1.24.1",
+    "pipedrive": "^10.4.3",
+    "server-accepts-email": "^1.11.1"
+  },
+  "devDependencies": {
+    "mocha": "^8.1.0"
+  }
+}
