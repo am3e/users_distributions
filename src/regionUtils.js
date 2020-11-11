@@ -17,7 +17,9 @@ const US = {
       RegionCode: { id: "State Code", title: "State Code" },
     },
     CleanRegionalCode: (region) => {
-      return region.trim().substring(0, 3);
+      const trimmed = parseInt(region.trim()) + '';
+      const short = trimmed.substring(0, trimmed.length - 2);
+      return short;
     },
     SumLeadAum: (row) => {
       return sumColumns(row, ["primary_aum", "secondary_aum"]);
