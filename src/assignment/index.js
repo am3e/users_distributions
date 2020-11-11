@@ -16,7 +16,7 @@ const mainHeaders = [
   { id: "phone", title: "phone" },
   { id: "Issue", title: "Issue" },
   { id: "Reason", title: "Reason" },
-  { title: "Empty" },
+  { id: "Scrubbed", title: "Scrubbed" },
   { id: "distance", title: "distance" },
   { id: "house_value", title: "house_value" },
   { id: "child_count", title: "child_count" },
