@@ -3,7 +3,7 @@ const fs = require("fs");
 const { DateTime } = require("luxon");
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const { assignLeads } = require("./assignment");
-const { groupBy } = require("lodash");
+const { groupBy, uniqBy } = require("lodash");
 const Country = require("../regionUtils.js");
 
 const mainHeaders = [
@@ -67,7 +67,7 @@ const generateAll = async (currentDate) => {
   }));
   const leadDistances = {...leadDistancesMarketing, ...leadDistancesBonus};
   const distances = [...distancesMarketing, ...distancesBonus];
-  const unfulfilledAdvisors = [...unfulfilledAdvisorsMarketing, ...unfulfilledAdvisorsBonus];
+  const unfulfilledAdvisors = uniqBy([...unfulfilledAdvisorsMarketing, ...unfulfilledAdvisorsBonus], advisor => advisor['referral_code']);
   const distancesByLead = groupBy(distances, "lead.household_id");
   const inventoryWriter = createCsvWriter({
     path: `csv/all/${currentDate.toISODate()}-${Country.Code}-assigned.csv`,
@@ -89,42 +89,64 @@ const generateAll = async (currentDate) => {
       }
     })
   );
+  
+  const unassignedLeadsByRegion = groupBy(leads.filter(lead => !leadAssignments[lead["household_id"]]), Country.Columns.Region.title);
+  console.log(`Unassigned Leads:`);
+  Object.keys(unassignedLeadsByRegion).forEach(region => {
+    console.log(`${region}, ${unassignedLeadsByRegion[region].length}`);
+  })
 
-  console.log(['referral_code', 'Region', 'fulfilled', 'unfulfilled'].join(','));
+  console.log(['*referral_code', 'Region', 'fulfilled', 'unfulfilled'].join(','));
   unfulfilledAdvisors.map(advisor => {
     const leads = advisorLeads[advisor["referral_code"]];
     const fulfilled = leads ? leads.length : 0;
-    console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, advisor['NewLeads'] - fulfilled].join(","));
+    if (advisor['TotalLeads'] - fulfilled > 0) {
+      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, advisor['TotalLeads'] - fulfilled].join(","));
+    }
   });
 
-
-  console.log(['referral_code', 'fulfilled', 'distance', 'house value', 'child count', 'age', 'lead income','lead_aum'].join(','));
+  console.log(['*referral_code', 'lead_aum'].join(','));
   Object.entries(advisorLeads).map(([referral_code, household_ids]) => {
-    const avgLeadDistance = household_ids.reduce((sum,household_id) => {
-      const lead = leads.find((lead) => lead["household_id"] === household_id);
-      return sum + leadDistances[lead["household_id"]];
-    },0)/ household_ids.length;
-    const avgHomeseValue = household_ids.reduce((sum,household_id) => {
-      const lead = leads.find((lead) => lead["household_id"] === household_id);
-      return sum + parseInt(lead["house_value"]);
-    },0)/ household_ids.length;
-    const avgChildCount = household_ids.reduce((sum,household_id) => {
-      const lead = leads.find((lead) => lead["household_id"] === household_id);
-      return sum + parseInt(lead["child_count"]);
-    },0)/ household_ids.length;
-    const avgAge = household_ids.reduce((sum,household_id) => {
-      const lead = leads.find((lead) => lead["household_id"] === household_id);
-      return sum + parseInt(lead["primary_age"]);
-    },0)/ household_ids.length;
-    const avgLeadIncome = household_ids.reduce((sum,household_id) => {
-      const lead = leads.find((lead) => lead["household_id"] === household_id);
-      return sum + parseInt(lead["lead_income"]);
-    },0)/ household_ids.length;
     const avgLeadAum = household_ids.reduce((sum,household_id) => {
       const lead = leads.find((lead) => lead["household_id"] === household_id);
       return sum + parseInt(lead["lead_aum"]);
     },0)/ household_ids.length;
-    console.log([referral_code, household_ids.length, avgLeadDistance.toFixed(0), avgHomeseValue.toFixed(0), avgChildCount.toFixed(0), avgAge.toFixed(0),avgLeadIncome.toFixed(0), avgLeadAum.toFixed(0)].join(","));
+    if (avgLeadAum < 120000) {
+      console.log([referral_code, avgLeadAum.toFixed(0)].join(","));
+    }
+  })
+
+  console.log(['*referral_code', 'fulfilled', 'distance', 'house value', 'child count', 'age', 'lead income','lead_aum'].join(','));
+  Object.entries(advisorLeads).map(([referral_code, household_ids]) => {
+    if(household_ids.length === 0) {
+      console.log([referral_code, household_ids.length, 0, 0, 0, 0, 0, 0].join(","));
+    } else {
+      const avgLeadDistance = household_ids.reduce((sum,household_id) => {
+        const lead = leads.find((lead) => lead["household_id"] === household_id);
+        return sum + leadDistances[lead["household_id"]];
+      },0)/ household_ids.length;
+      const avgHomeseValue = household_ids.reduce((sum,household_id) => {
+        const lead = leads.find((lead) => lead["household_id"] === household_id);
+        return sum + parseInt(lead["house_value"]);
+      },0)/ household_ids.length;
+      const avgChildCount = household_ids.reduce((sum,household_id) => {
+        const lead = leads.find((lead) => lead["household_id"] === household_id);
+        return sum + parseInt(lead["child_count"]);
+      },0)/ household_ids.length;
+      const avgAge = household_ids.reduce((sum,household_id) => {
+        const lead = leads.find((lead) => lead["household_id"] === household_id);
+        return sum + parseInt(lead["primary_age"]);
+      },0)/ household_ids.length;
+      const avgLeadIncome = household_ids.reduce((sum,household_id) => {
+        const lead = leads.find((lead) => lead["household_id"] === household_id);
+        return sum + parseInt(lead["lead_income"]);
+      },0)/ household_ids.length;
+      const avgLeadAum = household_ids.reduce((sum,household_id) => {
+        const lead = leads.find((lead) => lead["household_id"] === household_id);
+        return sum + parseInt(lead["lead_aum"]);
+      },0)/ household_ids.length;
+      console.log([referral_code, household_ids.length, avgLeadDistance.toFixed(0), avgHomeseValue.toFixed(0), avgChildCount.toFixed(0), avgAge.toFixed(0),avgLeadIncome.toFixed(0), avgLeadAum.toFixed(0)].join(","));
+    }
   })
   
 };
