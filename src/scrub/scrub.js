@@ -6,6 +6,7 @@ const csvDir = "csv/scrub/";
 const { getMapFromHeaders, getMapFromHeader, parseDate, sumColumns } = require("../csvUtils.js");
 const Country = require("../regionUtils.js");
 const { DateTime } = require("luxon");
+const { daysOutFree, daysOutBonus } = require("../variables.js");
 
 
 const headers = [
@@ -15,6 +16,8 @@ const headers = [
   { id: "inserted_at", title: "inserted_at" },
   { id: "group", title: "group" },
   Country.Columns.Region,
+  { id: "Scrubbed", title: "Scrubbed" },
+  { id: "Scrub", title: "Scrub" },
   { id: "household_id", title: "household_id" },
   { id: "referred_by", title: "referred_by" },
   { id: "email", title: "email" },
@@ -81,6 +84,16 @@ const loadScrub = () => {
   const rows = [];
   return new Promise((resolve) => {
     fs.createReadStream(csvDir + `${Country.Code} scrub.csv`)
+      .pipe(csv())
+      .on("data", (row) => rows.push(row))
+      .on("end", () => resolve(rows));
+  });
+};
+
+const loadManualScrub = () => {
+  const rows = [];
+  return new Promise((resolve) => {
+    fs.createReadStream(csvDir + "manual-scrub.csv")
       .pipe(csv())
       .on("data", (row) => rows.push(row))
       .on("end", () => resolve(rows));
@@ -227,7 +240,7 @@ const validateVerified = (row) => {
 const now = DateTime.local();
 const today = DateTime.local(now.year, now.month, now.day);
 const validateNew = (row) => {
-  if (parseDate(row["inserted_at"]) <= today.minus({days:60})) {
+  if (parseDate(row["inserted_at"]) <= today.minus({days:daysOutFree})) {
     return "stale";
   }
 };
@@ -244,15 +257,23 @@ const scrubAppointment = (appointment) => {
 const rowType = (insertdate) => {
   if (insertdate) {
     const daysOut = parseDate(insertdate);
-    if (daysOut <= today.minus({days:60})) {
+    if (daysOut <= today.minus({days:daysOutFree})) {
         return "Free";
-    } else if (daysOut <= today.minus({days:12})) {
+    } else if (daysOut <= today.minus({days:daysOutBonus})) {
         return "Bonus";
     } else {
         return "Marketing";
     }
   }
 }
+
+const validateScrubbed = (row) => {
+  row["Scrubbed"] && console.log(row["Scrubbed"], row["household_id"]);
+  if (row["Scrubbed"] === row["household_id"]) {
+    row["Scrubbed"] = "scrubbing";
+    return;
+  }
+};
 
 const validateDispositions = (row) => {
   if (row["Disposition"] !== "new") {
@@ -294,7 +315,7 @@ const validateUnique = (row, scrubAdvisorEmails, scrubInvalidNames, scrubInvalid
     if (phoneRows.find((phoneRow) => parseDate(phoneRow["inserted_at"]).valueOf() > parseDate(row["inserted_at"]).valueOf() && phoneRow["email"] ))  {
       return `older plan/${phoneRows.length}`;
     }
-    row["Scrubbed"] = `newest plan/${phoneRows.length}`;
+    row["Issue"] = `newest plan/${phoneRows.length}`;
     return;
   }
 };
@@ -329,6 +350,7 @@ const scrubRow = (
   scrubInvalidNameEmails,
   scrubInvalidDomainEmails,
   userPhoneToRow,
+  manualScrub,
   scrubDispositions,
   scrubAssignments
 ) => {
@@ -342,6 +364,8 @@ const scrubRow = (
     row["Lat"] = regionCodeRows[0]["Lat"];
   }
   row[Country.Columns.PhoneRegion.id] = scrubPhone[cleanPhone(row["phone"])];
+  row["Scrubbed"] = manualScrub[row["household_id"]];
+  row["Scrub"] = "";
   row["Disposition"] = scrubDispositions[row["household_id"]];
   row["Assignment"] = scrubAssignments[row["household_id"]];
   row["group"] = cleanGroup(row["group"]);
@@ -357,6 +381,7 @@ const scrubRow = (
       validateAge,
       validateGroup,
       validateUnique,
+      validateScrubbed,
       validateDispositions,
       validateVerified,
       validateFirstName,
@@ -374,8 +399,9 @@ const scrubRow = (
 
 
 const scrub = async () => {
-  const [scrubRows, userRows, dispositionRows] = await Promise.all([
+  const [scrubRows, manualScrubRows, userRows, dispositionRows] = await Promise.all([
     loadScrub(),
+    loadManualScrub(),
     loadUsers(),
     loadDispositions(),
   ]);
@@ -383,6 +409,13 @@ const scrub = async () => {
   snapshot(
     `loaded ${scrubRows.length} scrub rows and ${userRows.length} user rows and ${dispositionRows.length} disposition rows`
   );
+  const manualScrub = getMapFromHeaders(
+    manualScrubRows,
+    "household_id",
+    "household_id"
+  );
+  
+  console.log(Object.keys(manualScrubRows[0])[0].split(''), "household_id".split(''));
   const scrubPhone = getMapFromHeaders(scrubRows, "Area Code", Country.Scrub.Columns.RegionCode.id);
   const scrubDispositions = getMapFromHeaders(
     dispositionRows,
@@ -431,6 +464,7 @@ const scrub = async () => {
       scrubInvalidNameEmails,
       scrubInvalidDomainEmails,
       userPhoneToRow,
+      manualScrub,
       scrubDispositions,
       scrubAssignments
     );
@@ -441,7 +475,7 @@ const scrub = async () => {
     }
     if (!row) {
       return "nothing";
-    } else if ((row["email"] !== "") && (parseDate(row["inserted_at"]) >= today.minus({days:5}))) {
+    } else if ((row["email"] !== "") && (row["Scrubbed"] !== "scrubbing") && (parseDate(row["inserted_at"]) >= today.minus({days:5}))) {
       scrubList.push(row);
     } else {
       return "nothing";
@@ -473,4 +507,5 @@ module.exports = {
   scrubRow,
   scrub,
   loadScrub,
+  loadManualScrub,
 };
