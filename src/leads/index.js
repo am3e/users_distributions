@@ -5,6 +5,8 @@ const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const {
   getLeadSchedule,
   getLeadScheduleByRegion,
+  getPromoLeadSchedule,
+  getPromoLeadScheduleByRegion,
 } = require("../leads/leads.js");
 const { loadScrub } = require("../scrub/scrub.js");
 const { getMapFromHeader, parseDate } = require("../csvUtils");
@@ -16,13 +18,13 @@ const advisorHeaders = [
   { id: "Lat", title: "Lat" },
   { id: "Long", title: "Long" },
   { title: "Empty" },
-  { id: "NewLeads", title: "NewLeads" },
+  { id: "TotalLeads", title: "TotalLeads" },
   { id: "referral_code", title: "referral_code" },
   { id: "First name", title: "First name" },
   { id: "Recipient", title: "Recipient" },
   { id: "MarketingLeads", title: "MarketingLeads" },
   { id: "BonusLeads", title: "BonusLeads" },
-  { id: "marketing_this_period", title: "marketing_this_period" },
+  { id: "assigned_marketing_this_period", title: "assigned_marketing_this_period" },
   { id: "subscribed_leads", title: "subscribed_leads" },
   { id: "Copy", title: "Copy" },
   { id: "RemaingingLeads", title: "RemaingingLeads" },
@@ -70,6 +72,9 @@ const generateAdvisorLeads = async (currentDate, advisors, scrub) => {
   const leadSchedules = advisors.map((advisor) =>
     getLeadSchedule(advisor, currentDate)
   );
+  const leadPromoSchedules = advisors.map((advisor) =>
+    getPromoLeadSchedule(advisor, currentDate)
+  );
 
   scrub.forEach(scrubRow => scrubRow[Country.Scrub.Columns.Code.title] = scrubRow[Country.Scrub.Columns.Code.title] + '');
   const scrubRegionCodes = getMapFromHeader(scrub, Country.Scrub.Columns.Code.title);
@@ -84,23 +89,26 @@ const generateAdvisorLeads = async (currentDate, advisors, scrub) => {
         const leadDay = leadSchedules[index].find(
           (daySchedule) => daySchedule.date === currentDate.toISODate()
         );
+        const promoLeadDay = leadPromoSchedules[index].find(
+          (daySchedule) => daySchedule.date === currentDate.toISODate()
+        );
         const NewLeads = leadDay.leads;
-        const regionCodeRows = scrubRegionCodes[Country.Scrub.CleanRegionalCode(advisor["upper"])] || [];
+        const regionCodeRows = scrubRegionCodes[advisor["upper"]] || [];
         const regionCodeRow = regionCodeRows[0] || {};
         const latestPeriodStart = parseDate(advisor["latest_period_start"]);
         const stripeCreatedAt = parseDate(advisor["stripe_created_at"]);
-        const ImmediateBonusLeads = parseInt(advisor["ImmediateBonusLeads"]);
-        const BonusLeads = parseInt(advisor["BonusLeads"]);
+        const asapBonus = parseInt(advisor["asapBonus"]);
+        const promoBonus = promoLeadDay ? promoLeadDay.promoLeads : 0;
         const marketingLeads = parseInt(advisor["marketing_this_period"]);
         const now = DateTime.local();
         const today = DateTime.local(now.year, now.month, now.day)
         const subscribedLeads = parseInt(advisor["subscribed_leads"]);
         return {
           ...advisor,
-          NewLeads: NewLeads + (ImmediateBonusLeads || 0),
-          MarketingLeads: Math.max(0, NewLeads - BonusLeads - ImmediateBonusLeads),
-          BonusLeads: Math.max(0, ImmediateBonusLeads + BonusLeads),
-          marketing_this_period: Math.max(0, NewLeads - BonusLeads + marketingLeads),
+          TotalLeads: NewLeads + (asapBonus + promoBonus || 0),
+          MarketingLeads: NewLeads,
+          BonusLeads: Math.max(0, asapBonus + promoBonus),
+          assigned_marketing_this_period: Math.max(0, NewLeads + marketingLeads),
           dayInMonth: leadDay.dayInMonth,
           [Country.Columns.Region.id]: regionCodeRow[Country.Scrub.Columns.Region.title],
           Long: regionCodeRow["Long"],
@@ -108,20 +116,20 @@ const generateAdvisorLeads = async (currentDate, advisors, scrub) => {
           Copy: "",
           Difference: latestPeriodStart.diff(stripeCreatedAt).as('days'),
           dayInPeriod: today.diff(latestPeriodStart).as('days'),
-          RemaingingLeads: Math.max(0, subscribedLeads - NewLeads - BonusLeads - marketingLeads),
+          RemaingingLeads: Math.max(0, subscribedLeads - NewLeads - marketingLeads),
         };
       })
       .filter(
         (advisor) =>
-          advisor["NewLeads"] != 0 && !isNaN(advisor["MarketingLeads"])
+          advisor["TotalLeads"] != 0 && !isNaN(advisor["MarketingLeads"]) && !isNaN(advisor["BonusLeads"]) && (parseDate(advisor["latest_period_start"]) < DateTime.local()),
       )
   );
 };
 
 const generateRegionLeads = async (currentDate, advisors, scrub) => {
   const leadSchedule = getLeadScheduleByRegion(advisors, currentDate, scrub);
-  const leadScheduleEntires = Object.entries(leadSchedule);
-  const aRegionSchedule = leadScheduleEntires[0][1];
+  const leadScheduleEntries = Object.entries(leadSchedule);
+  const aRegionSchedule = leadScheduleEntries[0][1];
   const regionHeaders = [
     Country.Columns.Region,
     ...aRegionSchedule.map((scheduleDay) => ({
@@ -134,7 +142,7 @@ const generateRegionLeads = async (currentDate, advisors, scrub) => {
     header: regionHeaders,
   });
   writer.writeRecords(
-    leadScheduleEntires
+    leadScheduleEntries
       .map(([region, leadSchedule]) => {
         return {
           [Country.Columns.Region.id]: region,
@@ -142,6 +150,39 @@ const generateRegionLeads = async (currentDate, advisors, scrub) => {
             leadSchedule.map((scheduleDay) => [
               scheduleDay.date,
               scheduleDay.leads,
+            ])
+          ),
+        };
+      })
+      .filter((row) => row[Country.Columns.Region.id])
+      .sort((row1,row2) => row1[Country.Columns.Region.id].localeCompare(row2[Country.Columns.Region.id]))
+  );
+};
+
+const generateRegionPromoLeads = async (currentDate, advisors, scrub) => {
+  const promoLeadSchedule = getPromoLeadScheduleByRegion(advisors, currentDate, scrub);
+  const leadPromoScheduleEntries = Object.entries(promoLeadSchedule);
+  const aRegionPromoSchedule = leadPromoScheduleEntries[0][1];
+  const regionHeaders = [
+    Country.Columns.Region,
+    ...aRegionPromoSchedule.map((scheduleDay) => ({
+      id: scheduleDay.date,
+      title: scheduleDay.date,
+    })),
+  ];
+  const writer = createCsvWriter({
+    path: `csv/all/${currentDate.toISODate()}-${Country.Code}_promoleads_schedule.csv`,
+    header: regionHeaders,
+  });
+  writer.writeRecords(
+    leadPromoScheduleEntries
+      .map(([region, promoLeadSchedule]) => {
+        return {
+          [Country.Columns.Region.id]: region,
+          ...Object.fromEntries(
+            promoLeadSchedule.map((scheduleDay) => [
+              scheduleDay.date,
+              scheduleDay.promoLeads,
             ])
           ),
         };
@@ -159,9 +200,10 @@ const generateAll = async () => {
   const today = DateTime.local(now.year, now.month, now.day);
   generateAdvisorLeads(today, overrideAdvisors, scrub);
   generateRegionLeads(today, overrideAdvisors, scrub);
+  generateRegionPromoLeads(today, overrideAdvisors, scrub);
 
-  const tomorrow = today.plus({days:1});
-  generateAdvisorLeads(tomorrow, overrideAdvisors, scrub);
+  // const tomorrow = today.plus({days:1});
+  // generateAdvisorLeads(tomorrow, overrideAdvisors, scrub);
 };
 
 generateAll();
