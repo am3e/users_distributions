@@ -1,5 +1,6 @@
 const { getDistanceFromLatLonInKm } = require("../distanceUtils");
 const Country = require("../regionUtils.js");
+const { AUM_BUCKET, aumComparisonType, aumLeadCount, tier1, tier2, tier3, tier4, pctTier1, pctTier2, pctTier3, pctTier4, pctTier5 } = require("../variables.js");
 
 const calculateDistances = (leads, advisors) => {
   return leads
@@ -26,28 +27,27 @@ const calculateBuckets = (advisors, leadsField) => {
     .map((advisor) => {
       const leads = parseInt(advisor[leadsField])
       return [ advisor["referral_code"], [
-        Math.ceil(leads * 0.35),
-        Math.ceil(leads * 0.30),
-        Math.ceil(leads * 0.35),
-        Math.ceil(leads * 0.65),
-        Math.ceil(leads * 0.9),
+        Math.ceil(leads * pctTier1),
+        Math.ceil(leads * pctTier2),
+        Math.ceil(leads * pctTier3),
+        Math.ceil(leads * pctTier4),
+        Math.ceil(leads * pctTier5),
       ]];
     }));
 };
 
 const calculateAumBuckets = (advisors) => {
   return Object.fromEntries(advisors
-    .map((advisor) => [advisor["referral_code"], 2 ]));
+    .map((advisor) => [advisor["referral_code"], aumLeadCount ]));
 };
 
-const AUM_BUCKET = 125000;
 const fullAumBucket = (count, lead_aum) => {
   console.log(lead_aum, count);
-  return lead_aum >= AUM_BUCKET && count === 0;
+  return (aumComparisonType(lead_aum,AUM_BUCKET)) && count === 0;
 }
 
 const decrementAumBucket = (advisorAumBuckets, referral_code, lead_aum) => {
-  if (lead_aum >= AUM_BUCKET) {
+  if (aumComparisonType(lead_aum,AUM_BUCKET)) {
     advisorAumBuckets[referral_code]--;
   }
 }
@@ -62,11 +62,6 @@ const getUnfulfilledAdvisors = (advisors, advisorLeads, leadsField) => {
     ));
   });
 };
-
-const tier1 = 25;
-const tier2 = 75;
-const tier3 = 100;
-const tier4 = 275;
 
 const fullBucket = (bucket, distance) => {
     if (distance <= tier1) {
