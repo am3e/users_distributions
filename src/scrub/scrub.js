@@ -299,8 +299,11 @@ const validateDispositions = (row) => {
 };
 
 const validateGroup = (row) => {
-  if (row["group"] !== "FB" && row["group"] !== "ORG" && row["group"] !== "BLOG" && row["group"] !== "GA" && row["group"] !== "LI" && row["group"] !== "VN" && row["group"] !== "YT" && row["group"] !== "SC" && row["group"] !== "RED" && row["group"] !== "TJ" && row["group"] !== "SPOT" && row["group"] !== "TK" && row["group"] !== "OB" && row["group"] !== "TW" && row["group"].startsWith("dnc-")) {
+  if (row["group"] !== "FB" && row["group"] !== "ORG" && row["group"] !== "BLOG" && row["group"] !== "GA" && row["group"] !== "LI" && row["group"] !== "VN" && row["group"] !== "YT" && row["group"] !== "SC" && row["group"] !== "RED" && row["group"] !== "TJ" && row["group"] !== "SPOT" && row["group"] !== "TK" && row["group"] !== "OB" && row["group"] !== "TW") {
     return "not inventory";
+  }
+  if (row["group"].startsWith("dnc-")) {
+    return "advisor tester";
   }
 };
 
