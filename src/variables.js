@@ -1,5 +1,5 @@
 
-//Change for unassigned leads
+//Change for unassigned users
 const daysOutFree = 240;
 const daysOutBonus = 6;
 
@@ -13,15 +13,15 @@ const aumLessThan = (aum, amount) => {
   return aum <= amount;
 }
 const aumComparisonType = aumLessThan;
-const aumLeadCount = 4;
+const aumUserCount = 4;
 
-//distance of lead to advisor
+//distance of user to advisor
 const tier1 = 25;
 const tier2 = 75;
 const tier3 = 100;
 const tier4 = 275;
 
-//percentage of leads distances to advisor
+//percentage of users distances to advisor
 const pctTier1 = 0.65;
 const pctTier2 = 0.45;
 const pctTier3 = 0.55;
@@ -33,7 +33,7 @@ module.exports = {
     daysOutBonus,
     AUM_BUCKET,
     aumComparisonType,
-    aumLeadCount,
+    aumUserCount,
     tier1,
     tier2,
     tier3,

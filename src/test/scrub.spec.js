@@ -118,17 +118,17 @@ describe("scrub", () => {
       "2234567890": [rows[2], rows[3]],
     };
 
-    it("should sum primary_income and secondary_income for lead_income", () => {
+    it("should sum primary_income and secondary_income for user_income", () => {
       scrubRow(rows[0], {}, {}, {}, userPhoneToRow, {}, {});
-      assert.equal(rows[0]["lead_income"], 107000 + 76000);
+      assert.equal(rows[0]["user_income"], 107000 + 76000);
     });
 
-    it("should make a note that the lead has multiple plans and belongs to an advisor", () => {
+    it("should make a note that the user has multiple plans and belongs to an advisor", () => {
       scrubRow(rows[0], {}, {}, {}, userPhoneToRow, {}, {});
       assert.match(rows[0]["Reason"], /exists with advisor/);
     });
 
-    it("should make a note that the lead has multiple plans", () => {
+    it("should make a note that the user has multiple plans", () => {
       scrubRow(rows[2], {}, {}, {}, userPhoneToRow, {}, {});
       assert.match(rows[2]["Note"], /multiple plans/);
     });

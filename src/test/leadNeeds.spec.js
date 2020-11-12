@@ -3,11 +3,11 @@ const { expect } = require("chai");
 const {
   getLatestPeriodStart,
   getCurrentMonthDays,
-  getLeadSchedule,
-  getLeadScheduleByProvince,
-} = require("../leads/leads.js");
+  getUserSchedule,
+  getUserScheduleByProvince,
+} = require("../users/users.js");
 
-describe("leadNeeds", () => {
+describe("userNeeds", () => {
   const scrub = [
     {
       Postal: "M4G",
@@ -26,19 +26,19 @@ describe("leadNeeds", () => {
     {
       upper: "M4G",
       latest_period_start: "2020-07-22 20:50",
-      subscribed_leads: "30",
+      subscribed_users: "30",
       // "Subscription Plan": "plan_HBqX6OMJypD9mA",
     },
     {
       upper: "M1H",
       latest_period_start: "2020-07-26 20:50",
-      subscribed_leads: "50",
+      subscribed_users: "50",
       //  "Subscription Plan": "plan_HBqaOVKUMqmC7B",
     },
     {
       upper: "N1L",
       latest_period_start: "2020-07-22 20:50",
-      subscribed_leads: "10",
+      subscribed_users: "10",
       //  "Subscription Plan": "plan_H0Sxm9UMnr5GhF",
     },
   ];
@@ -67,149 +67,149 @@ describe("leadNeeds", () => {
     expect(calculatedDays).to.eql(12);
   });
 
-  it("should generate lead schedule for 30 plan", () => {
+  it("should generate user schedule for 30 plan", () => {
     //given
     const currentDate = DateTime.fromISO("2020-08-03");
 
     //when
-    const leadSchedule = getLeadSchedule(advisors[0], currentDate);
+    const userSchedule = getUserSchedule(advisors[0], currentDate);
 
     //then
-    expect(leadSchedule).to.eql([
-      { date: "2020-07-27", leads: 0, dayInMonth: 5 },
-      { date: "2020-07-28", leads: 0, dayInMonth: 6 },
-      { date: "2020-07-29", leads: 0, dayInMonth: 7 },
-      { date: "2020-07-30", leads: 10, dayInMonth: 8 },
-      { date: "2020-07-31", leads: 0, dayInMonth: 9 },
-      { date: "2020-08-01", leads: 0, dayInMonth: 10 },
-      { date: "2020-08-02", leads: 0, dayInMonth: 11 },
-      { date: "2020-08-03", leads: 0, dayInMonth: 12 },
-      { date: "2020-08-04", leads: 0, dayInMonth: 13 },
-      { date: "2020-08-05", leads: 0, dayInMonth: 14 },
-      { date: "2020-08-06", leads: 10, dayInMonth: 15 },
-      { date: "2020-08-07", leads: 0, dayInMonth: 16 },
-      { date: "2020-08-08", leads: 0, dayInMonth: 17 },
-      { date: "2020-08-09", leads: 0, dayInMonth: 18 },
-      { date: "2020-08-10", leads: 0, dayInMonth: 19 },
-      { date: "2020-08-11", leads: 0, dayInMonth: 20 },
-      { date: "2020-08-12", leads: 0, dayInMonth: 21 },
-      { date: "2020-08-13", leads: 0, dayInMonth: 22 },
-      { date: "2020-08-14", leads: 0, dayInMonth: 23 },
-      { date: "2020-08-15", leads: 0, dayInMonth: 24 },
-      { date: "2020-08-16", leads: 0, dayInMonth: 25 },
-      { date: "2020-08-17", leads: 0, dayInMonth: 26 },
-      { date: "2020-08-18", leads: 0, dayInMonth: 27 },
-      { date: "2020-08-19", leads: 0, dayInMonth: 28 },
-      { date: "2020-08-20", leads: 0, dayInMonth: 29 },
-      { date: "2020-08-21", leads: 0, dayInMonth: 30 },
-      { date: "2020-08-22", leads: 0, dayInMonth: 31 },
-      { date: "2020-08-23", leads: 0, dayInMonth: 1 },
-      { date: "2020-08-24", leads: 10, dayInMonth: 2 },
-      { date: "2020-08-25", leads: 0, dayInMonth: 3 },
-      { date: "2020-08-26", leads: 0, dayInMonth: 4 },
-      { date: "2020-08-27", leads: 0, dayInMonth: 5 },
-      { date: "2020-08-28", leads: 0, dayInMonth: 6 },
-      { date: "2020-08-29", leads: 0, dayInMonth: 7 },
-      { date: "2020-08-30", leads: 0, dayInMonth: 8 },
+    expect(userSchedule).to.eql([
+      { date: "2020-07-27", users: 0, dayInMonth: 5 },
+      { date: "2020-07-28", users: 0, dayInMonth: 6 },
+      { date: "2020-07-29", users: 0, dayInMonth: 7 },
+      { date: "2020-07-30", users: 10, dayInMonth: 8 },
+      { date: "2020-07-31", users: 0, dayInMonth: 9 },
+      { date: "2020-08-01", users: 0, dayInMonth: 10 },
+      { date: "2020-08-02", users: 0, dayInMonth: 11 },
+      { date: "2020-08-03", users: 0, dayInMonth: 12 },
+      { date: "2020-08-04", users: 0, dayInMonth: 13 },
+      { date: "2020-08-05", users: 0, dayInMonth: 14 },
+      { date: "2020-08-06", users: 10, dayInMonth: 15 },
+      { date: "2020-08-07", users: 0, dayInMonth: 16 },
+      { date: "2020-08-08", users: 0, dayInMonth: 17 },
+      { date: "2020-08-09", users: 0, dayInMonth: 18 },
+      { date: "2020-08-10", users: 0, dayInMonth: 19 },
+      { date: "2020-08-11", users: 0, dayInMonth: 20 },
+      { date: "2020-08-12", users: 0, dayInMonth: 21 },
+      { date: "2020-08-13", users: 0, dayInMonth: 22 },
+      { date: "2020-08-14", users: 0, dayInMonth: 23 },
+      { date: "2020-08-15", users: 0, dayInMonth: 24 },
+      { date: "2020-08-16", users: 0, dayInMonth: 25 },
+      { date: "2020-08-17", users: 0, dayInMonth: 26 },
+      { date: "2020-08-18", users: 0, dayInMonth: 27 },
+      { date: "2020-08-19", users: 0, dayInMonth: 28 },
+      { date: "2020-08-20", users: 0, dayInMonth: 29 },
+      { date: "2020-08-21", users: 0, dayInMonth: 30 },
+      { date: "2020-08-22", users: 0, dayInMonth: 31 },
+      { date: "2020-08-23", users: 0, dayInMonth: 1 },
+      { date: "2020-08-24", users: 10, dayInMonth: 2 },
+      { date: "2020-08-25", users: 0, dayInMonth: 3 },
+      { date: "2020-08-26", users: 0, dayInMonth: 4 },
+      { date: "2020-08-27", users: 0, dayInMonth: 5 },
+      { date: "2020-08-28", users: 0, dayInMonth: 6 },
+      { date: "2020-08-29", users: 0, dayInMonth: 7 },
+      { date: "2020-08-30", users: 0, dayInMonth: 8 },
     ]);
   });
 
-  it("should generate lead schedule for 50 plan", () => {
+  it("should generate user schedule for 50 plan", () => {
     //given
     const currentDate = DateTime.fromISO("2020-08-03");
 
     //when
-    const leadSchedule = getLeadSchedule(advisors[1], currentDate);
+    const userSchedule = getUserSchedule(advisors[1], currentDate);
 
     //then
-    expect(leadSchedule).to.eql([
-      { date: "2020-07-27", leads: 20, dayInMonth: 1 },
-      { date: "2020-07-28", leads: 0, dayInMonth: 2 },
-      { date: "2020-07-29", leads: 0, dayInMonth: 3 },
-      { date: "2020-07-30", leads: 0, dayInMonth: 4 },
-      { date: "2020-07-31", leads: 0, dayInMonth: 5 },
-      { date: "2020-08-01", leads: 0, dayInMonth: 6 },
-      { date: "2020-08-02", leads: 0, dayInMonth: 7 },
-      { date: "2020-08-03", leads: 0, dayInMonth: 8 },
-      { date: "2020-08-04", leads: 15, dayInMonth: 9 },
-      { date: "2020-08-05", leads: 0, dayInMonth: 10 },
-      { date: "2020-08-06", leads: 0, dayInMonth: 11 },
-      { date: "2020-08-07", leads: 0, dayInMonth: 12 },
-      { date: "2020-08-08", leads: 0, dayInMonth: 13 },
-      { date: "2020-08-09", leads: 0, dayInMonth: 14 },
-      { date: "2020-08-10", leads: 15, dayInMonth: 15 },
-      { date: "2020-08-11", leads: 0, dayInMonth: 16 },
-      { date: "2020-08-12", leads: 0, dayInMonth: 17 },
-      { date: "2020-08-13", leads: 0, dayInMonth: 18 },
-      { date: "2020-08-14", leads: 0, dayInMonth: 19 },
-      { date: "2020-08-15", leads: 0, dayInMonth: 20 },
-      { date: "2020-08-16", leads: 0, dayInMonth: 21 },
-      { date: "2020-08-17", leads: 0, dayInMonth: 22 },
-      { date: "2020-08-18", leads: 0, dayInMonth: 23 },
-      { date: "2020-08-19", leads: 0, dayInMonth: 24 },
-      { date: "2020-08-20", leads: 0, dayInMonth: 25 },
-      { date: "2020-08-21", leads: 0, dayInMonth: 26 },
-      { date: "2020-08-22", leads: 0, dayInMonth: 27 },
-      { date: "2020-08-23", leads: 0, dayInMonth: 28 },
-      { date: "2020-08-24", leads: 0, dayInMonth: 29 },
-      { date: "2020-08-25", leads: 0, dayInMonth: 30 },
-      { date: "2020-08-26", leads: 0, dayInMonth: 31 },
-      { date: "2020-08-27", leads: 20, dayInMonth: 1 },
-      { date: "2020-08-28", leads: 0, dayInMonth: 2 },
-      { date: "2020-08-29", leads: 0, dayInMonth: 3 },
-      { date: "2020-08-30", leads: 0, dayInMonth: 4 },
+    expect(userSchedule).to.eql([
+      { date: "2020-07-27", users: 20, dayInMonth: 1 },
+      { date: "2020-07-28", users: 0, dayInMonth: 2 },
+      { date: "2020-07-29", users: 0, dayInMonth: 3 },
+      { date: "2020-07-30", users: 0, dayInMonth: 4 },
+      { date: "2020-07-31", users: 0, dayInMonth: 5 },
+      { date: "2020-08-01", users: 0, dayInMonth: 6 },
+      { date: "2020-08-02", users: 0, dayInMonth: 7 },
+      { date: "2020-08-03", users: 0, dayInMonth: 8 },
+      { date: "2020-08-04", users: 15, dayInMonth: 9 },
+      { date: "2020-08-05", users: 0, dayInMonth: 10 },
+      { date: "2020-08-06", users: 0, dayInMonth: 11 },
+      { date: "2020-08-07", users: 0, dayInMonth: 12 },
+      { date: "2020-08-08", users: 0, dayInMonth: 13 },
+      { date: "2020-08-09", users: 0, dayInMonth: 14 },
+      { date: "2020-08-10", users: 15, dayInMonth: 15 },
+      { date: "2020-08-11", users: 0, dayInMonth: 16 },
+      { date: "2020-08-12", users: 0, dayInMonth: 17 },
+      { date: "2020-08-13", users: 0, dayInMonth: 18 },
+      { date: "2020-08-14", users: 0, dayInMonth: 19 },
+      { date: "2020-08-15", users: 0, dayInMonth: 20 },
+      { date: "2020-08-16", users: 0, dayInMonth: 21 },
+      { date: "2020-08-17", users: 0, dayInMonth: 22 },
+      { date: "2020-08-18", users: 0, dayInMonth: 23 },
+      { date: "2020-08-19", users: 0, dayInMonth: 24 },
+      { date: "2020-08-20", users: 0, dayInMonth: 25 },
+      { date: "2020-08-21", users: 0, dayInMonth: 26 },
+      { date: "2020-08-22", users: 0, dayInMonth: 27 },
+      { date: "2020-08-23", users: 0, dayInMonth: 28 },
+      { date: "2020-08-24", users: 0, dayInMonth: 29 },
+      { date: "2020-08-25", users: 0, dayInMonth: 30 },
+      { date: "2020-08-26", users: 0, dayInMonth: 31 },
+      { date: "2020-08-27", users: 20, dayInMonth: 1 },
+      { date: "2020-08-28", users: 0, dayInMonth: 2 },
+      { date: "2020-08-29", users: 0, dayInMonth: 3 },
+      { date: "2020-08-30", users: 0, dayInMonth: 4 },
     ]);
   });
 
-  it("should generate lead schedule by province", () => {
+  it("should generate user schedule by province", () => {
     //given
     const currentDate = DateTime.fromISO("2020-08-03");
 
     //when
-    const leadSchedule = getLeadScheduleByProvince(
+    const userSchedule = getUserScheduleByProvince(
       advisors,
       currentDate,
       scrub
     );
 
     //then
-    expect(leadSchedule).to.eql({
+    expect(userSchedule).to.eql({
       ON: [
-        { date: "2020-07-27", leads: 20 },
-        { date: "2020-07-28", leads: 0 },
-        { date: "2020-07-29", leads: 0 },
-        { date: "2020-07-30", leads: 10 },
-        { date: "2020-07-31", leads: 0 },
-        { date: "2020-08-01", leads: 0 },
-        { date: "2020-08-02", leads: 0 },
-        { date: "2020-08-03", leads: 0 },
-        { date: "2020-08-04", leads: 15 },
-        { date: "2020-08-05", leads: 0 },
-        { date: "2020-08-06", leads: 10 },
-        { date: "2020-08-07", leads: 0 },
-        { date: "2020-08-08", leads: 0 },
-        { date: "2020-08-09", leads: 0 },
-        { date: "2020-08-10", leads: 15 },
-        { date: "2020-08-11", leads: 0 },
-        { date: "2020-08-12", leads: 0 },
-        { date: "2020-08-13", leads: 0 },
-        { date: "2020-08-14", leads: 0 },
-        { date: "2020-08-15", leads: 0 },
-        { date: "2020-08-16", leads: 0 },
-        { date: "2020-08-17", leads: 0 },
-        { date: "2020-08-18", leads: 0 },
-        { date: "2020-08-19", leads: 0 },
-        { date: "2020-08-20", leads: 0 },
-        { date: "2020-08-21", leads: 0 },
-        { date: "2020-08-22", leads: 0 },
-        { date: "2020-08-23", leads: 0 },
-        { date: "2020-08-24", leads: 20 },
-        { date: "2020-08-25", leads: 0 },
-        { date: "2020-08-26", leads: 0 },
-        { date: "2020-08-27", leads: 20 },
-        { date: "2020-08-28", leads: 0 },
-        { date: "2020-08-29", leads: 0 },
-        { date: "2020-08-30", leads: 0 },
+        { date: "2020-07-27", users: 20 },
+        { date: "2020-07-28", users: 0 },
+        { date: "2020-07-29", users: 0 },
+        { date: "2020-07-30", users: 10 },
+        { date: "2020-07-31", users: 0 },
+        { date: "2020-08-01", users: 0 },
+        { date: "2020-08-02", users: 0 },
+        { date: "2020-08-03", users: 0 },
+        { date: "2020-08-04", users: 15 },
+        { date: "2020-08-05", users: 0 },
+        { date: "2020-08-06", users: 10 },
+        { date: "2020-08-07", users: 0 },
+        { date: "2020-08-08", users: 0 },
+        { date: "2020-08-09", users: 0 },
+        { date: "2020-08-10", users: 15 },
+        { date: "2020-08-11", users: 0 },
+        { date: "2020-08-12", users: 0 },
+        { date: "2020-08-13", users: 0 },
+        { date: "2020-08-14", users: 0 },
+        { date: "2020-08-15", users: 0 },
+        { date: "2020-08-16", users: 0 },
+        { date: "2020-08-17", users: 0 },
+        { date: "2020-08-18", users: 0 },
+        { date: "2020-08-19", users: 0 },
+        { date: "2020-08-20", users: 0 },
+        { date: "2020-08-21", users: 0 },
+        { date: "2020-08-22", users: 0 },
+        { date: "2020-08-23", users: 0 },
+        { date: "2020-08-24", users: 20 },
+        { date: "2020-08-25", users: 0 },
+        { date: "2020-08-26", users: 0 },
+        { date: "2020-08-27", users: 20 },
+        { date: "2020-08-28", users: 0 },
+        { date: "2020-08-29", users: 0 },
+        { date: "2020-08-30", users: 0 },
       ],
     });
   });

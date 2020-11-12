@@ -3,11 +3,11 @@ const { getDistanceFromLatLonInKm } = require("../distanceUtils");
 const {
   calculateDistances,
   getUnfulfilledAdvisors,
-  assignLeads,
+  assignUsers,
 } = require("../assignment/assignment");
 
 describe("assignment", () => {
-  const leads = [
+  const users = [
     {
       Lat: 45.4123,
       Long: -74.7108,
@@ -44,7 +44,7 @@ describe("assignment", () => {
       Long: -75.4416,
       Province: "ON",
       Recipient: "Jack",
-      NewLeads: 2,
+      NewUsers: 2,
       referral_code: "pw-jack",
     },
     {
@@ -52,7 +52,7 @@ describe("assignment", () => {
       Long: -114.139,
       Province: "AB",
       Recipient: "Karen",
-      NewLeads: 1,
+      NewUsers: 1,
       referral_code: "pw-karen",
     },
     {
@@ -60,7 +60,7 @@ describe("assignment", () => {
       Long: -75.7108,
       Province: "ON",
       Recipient: "Rob",
-      NewLeads: 2,
+      NewUsers: 2,
       referral_code: "pw-rob",
     },
   ];
@@ -78,30 +78,30 @@ describe("assignment", () => {
   });
 
   it("calculates all distance pairs", () => {
-    const distances = calculateDistances(leads, advisors);
+    const distances = calculateDistances(users, advisors);
     const expcetation = [
       {
-        lead: leads[1],
+        user: users[1],
         advisor: advisors[0],
         distance: 0,
       },
       {
-        lead: leads[3],
+        user: users[3],
         advisor: advisors[1],
         distance: 0,
       },
       {
-        lead: leads[1],
+        user: users[1],
         advisor: advisors[2],
         distance: 63.53364669246928,
       },
       {
-        lead: leads[0],
+        user: users[0],
         advisor: advisors[2],
         distance: 78.0583562594453,
       },
       {
-        lead: leads[0],
+        user: users[0],
         advisor: advisors[0],
         distance: 82.92087501566125,
       },
@@ -109,19 +109,19 @@ describe("assignment", () => {
     expect(distances).to.eql(expcetation);
   });
 
-  it("gets advisors that need leads", () => {
+  it("gets advisors that need users", () => {
     const unfulfilled = getUnfulfilledAdvisors(advisors, {});
     expect(unfulfilled).to.eql(advisors);
   });
 
-  it("assigns all leads", () => {
-    const [leadAssignments, advisorLeads] = assignLeads(leads, advisors);
-    expect(leadAssignments).to.eql({
+  it("assigns all users", () => {
+    const [userAssignments, advisorUsers] = assignUsers(users, advisors);
+    expect(userAssignments).to.eql({
       "1": "pw-rob",
       "2": "pw-jack",
       "4": "pw-karen",
     });
-    expect(advisorLeads).to.eql({
+    expect(advisorUsers).to.eql({
       "pw-jack": ["2"],
       "pw-karen": ["4"],
       "pw-rob": ["1"],

@@ -21,7 +21,7 @@ const US = {
       const short = trimmed.substring(0, trimmed.length - 2);
       return short;
     },
-    SumLeadAum: (row) => {
+    SumUserAum: (row) => {
       return sumColumns(row, ["primary_aum", "secondary_aum"]);
     },
     ValidateRegion: (row) => {
@@ -62,7 +62,7 @@ const Canada = {
     CleanRegionalCode: (region) => {
       return region.trim().substring(0, 3).toUpperCase();
     },
-    SumLeadAum: (row) => {
+    SumUserAum: (row) => {
       return sumColumns(row, [
         "primary_rrsp_balance",
         "primary_tfsa_balance",

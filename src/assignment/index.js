@@ -2,7 +2,7 @@ const csv = require("csv-parser");
 const fs = require("fs");
 const { DateTime } = require("luxon");
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
-const { assignLeads } = require("./assignment");
+const { assignUsers } = require("./assignment");
 const { groupBy, uniqBy } = require("lodash");
 const Country = require("../regionUtils.js");
 
@@ -21,8 +21,8 @@ const mainHeaders = [
   { id: "house_value", title: "house_value" },
   { id: "child_count", title: "child_count" },
   { id: "primary_age", title: "primary_age" },
-  { id: "lead_income", title: "lead_income" },
-  { id: "lead_aum", title: "lead_aum" },
+  { id: "user_income", title: "user_income" },
+  { id: "user_aum", title: "user_aum" },
   { title: "Empty" },
   { id: "household_id", title: "Household_ID" },
   { id: "referred_by", title: "Group" },
@@ -42,33 +42,33 @@ const loadFile = (path) => {
 };
 
 const generateAll = async (currentDate) => {
-  const [advisors, leads] = await Promise.all([
-    loadFile(`csv/all/${currentDate.toISODate()}-${Country.Code}-advisor_leads.csv`),
+  const [advisors, users] = await Promise.all([
+    loadFile(`csv/all/${currentDate.toISODate()}-${Country.Code}-advisor_users.csv`),
     loadFile(`csv/all/${Country.Code}_inventory.csv`),
   ]);
-  const [leadAssignmentsMarketing, advisorLeadsMarketing, leadDistancesMarketing, distancesMarketing, unfulfilledAdvisorsMarketing] = assignLeads(
-    leads.filter(lead => lead["Type"] === "Marketing"),
+  const [userAssignmentsMarketing, advisorUsersMarketing, userDistancesMarketing, distancesMarketing, unfulfilledAdvisorsMarketing] = assignUsers(
+    users.filter(user => user["Type"] === "Marketing"),
     advisors,
-    "MarketingLeads"
+    "MarketingUsers"
   );
-  const [leadAssignmentsBonus, advisorLeadsBonus, leadDistancesBonus, distancesBonus, unfulfilledAdvisorsBonus] = assignLeads(
-    leads.filter(lead => lead["Type"] === "Bonus"),
+  const [userAssignmentsBonus, advisorUsersBonus, userDistancesBonus, distancesBonus, unfulfilledAdvisorsBonus] = assignUsers(
+    users.filter(user => user["Type"] === "Bonus"),
     advisors,
-    "BonusLeads"
+    "BonusUsers"
   );
-  const leadAssignments = {...leadAssignmentsMarketing, ...leadAssignmentsBonus};
-  const advisorLeads = Object.fromEntries(advisors.map(advisor => {
-    const marketing = advisorLeadsMarketing[advisor["referral_code"]] || [];
-    const bonus = advisorLeadsBonus[advisor["referral_code"]] || [];
+  const userAssignments = {...userAssignmentsMarketing, ...userAssignmentsBonus};
+  const advisorUsers = Object.fromEntries(advisors.map(advisor => {
+    const marketing = advisorUsersMarketing[advisor["referral_code"]] || [];
+    const bonus = advisorUsersBonus[advisor["referral_code"]] || [];
     return [advisor["referral_code"], [
       ...marketing,
       ...bonus
     ]]
   }));
-  const leadDistances = {...leadDistancesMarketing, ...leadDistancesBonus};
+  const userDistances = {...userDistancesMarketing, ...userDistancesBonus};
   const distances = [...distancesMarketing, ...distancesBonus];
   const unfulfilledAdvisors = uniqBy([...unfulfilledAdvisorsMarketing, ...unfulfilledAdvisorsBonus], advisor => advisor['referral_code']);
-  const distancesByLead = groupBy(distances, "lead.household_id");
+  const distancesByUser = groupBy(distances, "user.household_id");
   const inventoryWriter = createCsvWriter({
     path: `csv/all/${currentDate.toISODate()}-${Country.Code}-assigned.csv`,
     header: [
@@ -77,83 +77,83 @@ const generateAll = async (currentDate) => {
     ]
   });
   inventoryWriter.writeRecords(
-    leads.map((lead) => {
-      const distancesForLead = distancesByLead[lead["household_id"]];
-      const advisorDistances = distancesForLead ? Object.fromEntries(distancesByLead[lead["household_id"]].map(distance => [distance.advisor["referral_code"], distance.distance])) : {};
+    users.map((user) => {
+      const distancesForUser = distancesByUser[user["household_id"]];
+      const advisorDistances = distancesForUser ? Object.fromEntries(distancesByUser[user["household_id"]].map(distance => [distance.advisor["referral_code"], distance.distance])) : {};
       return {
-        ...lead,
-        referral_code: leadAssignments[lead["household_id"]],
-        distance: leadDistances[lead["household_id"]],
-        Type: lead["Type"],
+        ...user,
+        referral_code: userAssignments[user["household_id"]],
+        distance: userDistances[user["household_id"]],
+        Type: user["Type"],
         ...advisorDistances,
       }
     })
   );
   
   console.log("");
-  const unassignedLeadsByRegion = groupBy(leads.filter(lead => !leadAssignments[lead["household_id"]]), Country.Columns.Region.title);
-  console.log("\x1b[45m", "Unassigned Leads:", "\x1b[0m");
-  Object.keys(unassignedLeadsByRegion).forEach(region => {
-    console.log(`${region}, ${unassignedLeadsByRegion[region].length}`);
+  const unassignedUsersByRegion = groupBy(users.filter(user => !userAssignments[user["household_id"]]), Country.Columns.Region.title);
+  console.log("\x1b[45m", "Unassigned Users:", "\x1b[0m");
+  Object.keys(unassignedUsersByRegion).forEach(region => {
+    console.log(`${region}, ${unassignedUsersByRegion[region].length}`);
   })
   console.log("");
   console.log("\x1b[45m", "Quick Review - Unfulfilled", "\x1b[0m");
   console.log(['*referral_code', 'Region', 'fulfilled', 'unfulfilled'].join(','));
   unfulfilledAdvisors.map(advisor => {
-    const leads = advisorLeads[advisor["referral_code"]];
-    const fulfilled = leads ? leads.length : 0;
-    if (advisor['TotalLeads'] - fulfilled > 0) {
-      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, (advisor['TotalLeads'] - fulfilled || 0)].join(","));
+    const users = advisorUsers[advisor["referral_code"]];
+    const fulfilled = users ? users.length : 0;
+    if (advisor['TotalUsers'] - fulfilled > 0) {
+      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, (advisor['TotalUsers'] - fulfilled || 0)].join(","));
     } 
   });
   console.log("");
   console.log("\x1b[45m", "AUM Review", "\x1b[0m");
-  console.log(['*referral_code', 'lead_aum'].join(','));
-  Object.entries(advisorLeads).map(([referral_code, household_ids]) => {
-    const avgLeadAum = household_ids.reduce((sum,household_id) => {
-      const lead = leads.find((lead) => lead["household_id"] === household_id);
-      return sum + parseInt(lead["lead_aum"]);
+  console.log(['*referral_code', 'user_aum'].join(','));
+  Object.entries(advisorUsers).map(([referral_code, household_ids]) => {
+    const avgUserAum = household_ids.reduce((sum,household_id) => {
+      const user = users.find((user) => user["household_id"] === household_id);
+      return sum + parseInt(user["user_aum"]);
     },0)/ household_ids.length;
-    if (avgLeadAum < 125000) {
-      console.log("issue -" + [referral_code, avgLeadAum.toFixed(0)].join(","));
-    } else if (avgLeadAum > 125000) {
-      console.log("no issue -" + [referral_code, avgLeadAum.toFixed(0)].join(","));
+    if (avgUserAum < 125000) {
+      console.log("issue -" + [referral_code, avgUserAum.toFixed(0)].join(","));
+    } else if (avgUserAum > 125000) {
+      console.log("no issue -" + [referral_code, avgUserAum.toFixed(0)].join(","));
     } else {
       console.log("issue - no aum, " + referral_code);
     }
   })
   console.log("");
   console.log("\x1b[45m", "Advisor User Averages", "\x1b[0m");
-  console.log(['*referral_code', 'fulfilled', 'distance', 'house value', 'child count', 'age', 'lead income','lead_aum'].join(','));
-  Object.entries(advisorLeads).map(([referral_code, household_ids]) => {
+  console.log(['*referral_code', 'fulfilled', 'distance', 'house value', 'child count', 'age', 'user income','user_aum'].join(','));
+  Object.entries(advisorUsers).map(([referral_code, household_ids]) => {
     if(household_ids.length === 0) {
       console.log([referral_code, household_ids.length, 0, 0, 0, 0, 0, 0].join(","));
     } else {
-      const avgLeadDistance = household_ids.reduce((sum,household_id) => {
-        const lead = leads.find((lead) => lead["household_id"] === household_id);
-        return sum + leadDistances[lead["household_id"]];
+      const avgUserDistance = household_ids.reduce((sum,household_id) => {
+        const user = users.find((user) => user["household_id"] === household_id);
+        return sum + userDistances[user["household_id"]];
       },0)/ household_ids.length;
       const avgHomeseValue = household_ids.reduce((sum,household_id) => {
-        const lead = leads.find((lead) => lead["household_id"] === household_id);
-        return sum + parseInt(lead["house_value"]);
+        const user = users.find((user) => user["household_id"] === household_id);
+        return sum + parseInt(user["house_value"]);
       },0)/ household_ids.length;
       const avgChildCount = household_ids.reduce((sum,household_id) => {
-        const lead = leads.find((lead) => lead["household_id"] === household_id);
-        return sum + parseInt(lead["child_count"]);
+        const user = users.find((user) => user["household_id"] === household_id);
+        return sum + parseInt(user["child_count"]);
       },0)/ household_ids.length;
       const avgAge = household_ids.reduce((sum,household_id) => {
-        const lead = leads.find((lead) => lead["household_id"] === household_id);
-        return sum + parseInt(lead["primary_age"]);
+        const user = users.find((user) => user["household_id"] === household_id);
+        return sum + parseInt(user["primary_age"]);
       },0)/ household_ids.length;
-      const avgLeadIncome = household_ids.reduce((sum,household_id) => {
-        const lead = leads.find((lead) => lead["household_id"] === household_id);
-        return sum + parseInt(lead["lead_income"]);
+      const avgUserIncome = household_ids.reduce((sum,household_id) => {
+        const user = users.find((user) => user["household_id"] === household_id);
+        return sum + parseInt(user["user_income"]);
       },0)/ household_ids.length;
-      const avgLeadAum = household_ids.reduce((sum,household_id) => {
-        const lead = leads.find((lead) => lead["household_id"] === household_id);
-        return sum + parseInt(lead["lead_aum"]);
+      const avgUserAum = household_ids.reduce((sum,household_id) => {
+        const user = users.find((user) => user["household_id"] === household_id);
+        return sum + parseInt(user["user_aum"]);
       },0)/ household_ids.length;
-      console.log([referral_code, household_ids.length, avgLeadDistance.toFixed(0), avgHomeseValue.toFixed(0), avgChildCount.toFixed(0), avgAge.toFixed(0),avgLeadIncome.toFixed(0), avgLeadAum.toFixed(0)].join(","));
+      console.log([referral_code, household_ids.length, avgUserDistance.toFixed(0), avgHomeseValue.toFixed(0), avgChildCount.toFixed(0), avgAge.toFixed(0),avgUserIncome.toFixed(0), avgUserAum.toFixed(0)].join(","));
     }
   })
   

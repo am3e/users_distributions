@@ -2,7 +2,7 @@ const { DateTime } = require("luxon");
 const { getMapFromHeaders, parseDate } = require("../csvUtils.js");
 const Country = require("../regionUtils.js");
 
-const leadWeeks = {
+const userWeeks = {
   0: {},
   10: { 1: 10, 8: 0, 15: 0, 22: 0 },
   25: { 1: 10, 8: 10, 15: 5, 22: 0 },
@@ -13,7 +13,7 @@ const leadWeeks = {
   60: { 1: 15, 8: 15, 15: 15, 22: 15 }
 };
 
-const promoLeadWeeks = {
+const promoUserWeeks = {
   0: {},
   5: { 1: 0, 8: 5, 15: 0, 22: 0 },
   10: { 1: 0, 8: 10, 15: 0, 22: 0 },
@@ -41,56 +41,56 @@ const isHolidayOrWeekend = (date) => {
   return date.weekday == 6 || date.weekday == 7;
 };
 
-const getLeadSchedule = (
+const getUserSchedule = (
   advisor,
   currentDate = DateTime.local(),
   days = 7 * 7,
   daysBack = 7
 ) => {
   let calculationDay = currentDate.minus({ days: daysBack });
-  const leadSchedule = [];
-  const weeks = leadWeeks[advisor["subscribed_leads"]];
+  const userSchedule = [];
+  const weeks = userWeeks[advisor["subscribed_leads"]];
   if (!weeks) {
     console.error(
-    `${advisors[index]["referral_code"]} - (${advisors[index]["stripe_customer_id"]}) subscribed_leads_amount not found for ${advisor["subscribed_leads"]}`
+    `${advisors[index]["referral_code"]} - (${advisors[index]["stripe_customer_id"]}) subscribed_users_amount not found for ${advisor["subscribed_leads"]}`
     );
     return;
   }
-  // let bonus = (parseInt(advisor["BonusLeads"])) + (parseInt(advisor["ImmediateBonusLeads"]));
+  // let bonus = (parseInt(advisor["BonusUsers"])) + (parseInt(advisor["ImmediateBonusUsers"]));
   // if (isNaN(bonus)) {
   //   bonus = 0;
   // }
-  let pendingLeads = 0;
+  let pendingUsers = 0;
   for (let i = 0; i < days; i++) {
     const latestPeriodStart = getLatestPeriodStart(
       parseDate(advisor["latest_period_start"]),
       calculationDay
     );
     const dayInMonth = getCurrentMonthDays(latestPeriodStart, calculationDay);
-    let leadsForToday = weeks[dayInMonth] || 0;
+    let usersForToday = weeks[dayInMonth] || 0;
     //console.log([advisor["referral_code"],advisor["latest_period_start"], calculationDay.toISODate(), latestPeriodStart.toISODate(), dayInMonth].join(","));
     if (isHolidayOrWeekend(calculationDay)) {
-      pendingLeads += leadsForToday;
-      leadsForToday = 0;
+      pendingUsers += usersForToday;
+      usersForToday = 0;
     } else {
-      leadsForToday += pendingLeads;
-      pendingLeads = 0;
+      usersForToday += pendingUsers;
+      pendingUsers = 0;
     }
-    // if (leadsForToday + bonus > 0) {
-    //   leadsForToday += bonus;
+    // if (usersForToday + bonus > 0) {
+    //   usersForToday += bonus;
     //   bonus = 0;
     // }
-    leadSchedule.push({
+    userSchedule.push({
       date: calculationDay.toISODate(),
-      leads: leadsForToday,
+      users: usersForToday,
       dayInMonth: dayInMonth,
     });
     calculationDay = calculationDay.plus({ days: 1 });
   }
-  return leadSchedule;
+  return userSchedule;
 };
 
-const getPromoLeadSchedule = (
+const getPromoUserSchedule = (
   advisor,
   currentDate = DateTime.local(),
   days = 7 * 7,
@@ -98,61 +98,61 @@ const getPromoLeadSchedule = (
 ) => {
   const promoBonus = (parseInt(advisor["promoBonus"]));
   let calculationDay = currentDate.minus({ days: daysBack });
-  const promoLeadSchedule = [];
-  const promoWeeks = promoLeadWeeks[promoBonus];
+  const promoUserSchedule = [];
+  const promoWeeks = promoUserWeeks[promoBonus];
   if (!promoWeeks) {
-    // console.error(`${advisor["stripe_customer_id"]} bonus_leads_amount not found for ${advisor["promoBonus"]}`);
-    return promoLeadSchedule;
+    // console.error(`${advisor["stripe_customer_id"]} bonus_users_amount not found for ${advisor["promoBonus"]}`);
+    return promoUserSchedule;
   }
   let bonus = (parseInt(advisor["asapBonus"]));
   if (isNaN(bonus)) {
     bonus = 0;
   }
-  let pendingBonusLeads = 0;
+  let pendingBonusUsers = 0;
   for (let i = 0; i < days; i++) {
     const latestPeriodStart = getLatestPeriodStart(
       parseDate(advisor["latest_period_start"]),
       calculationDay
     );
     const dayInMonth = getCurrentMonthDays(latestPeriodStart, calculationDay);
-    let promoLeadsForToday = promoWeeks[dayInMonth] || 0;
+    let promoUsersForToday = promoWeeks[dayInMonth] || 0;
     //console.log([advisor["referral_code"],advisor["latest_period_start"], calculationDay.toISODate(), latestPeriodStart.toISODate(), dayInMonth].join(","));
     if (isHolidayOrWeekend(calculationDay)) {
-      pendingBonusLeads += promoLeadsForToday;
-      promoLeadsForToday = 0;
+      pendingBonusUsers += promoUsersForToday;
+      promoUsersForToday = 0;
     } else {
-      promoLeadsForToday += pendingBonusLeads;
-      pendingBonusLeads = 0;
+      promoUsersForToday += pendingBonusUsers;
+      pendingBonusUsers = 0;
     }
-    if (promoLeadsForToday + bonus > 0) {
-      promoLeadsForToday += bonus;
+    if (promoUsersForToday + bonus > 0) {
+      promoUsersForToday += bonus;
       bonus = 0;
     } else {
-      promoLeadsForToday = 0;
+      promoUsersForToday = 0;
     }
-    promoLeadSchedule.push({
+    promoUserSchedule.push({
       date: calculationDay.toISODate(),
-      promoLeads: promoLeadsForToday,
+      promoUsers: promoUsersForToday,
       dayInMonth: dayInMonth,
     });
     calculationDay = calculationDay.plus({ days: 1 });
   }
-  return promoLeadSchedule;
+  return promoUserSchedule;
 };
 
-const getLeadScheduleByRegion = (
+const getUserScheduleByRegion = (
   advisors,
   currentDate = DateTime.local(),
   scrub
 ) => {
-  const leadSchedules = advisors.map((advisor) =>
-    getLeadSchedule(advisor, currentDate)
+  const userSchedules = advisors.map((advisor) =>
+    getUserSchedule(advisor, currentDate)
   );
   
   console.log("\x1b[45m", "Issue with Region Code", "\x1b[0m");
   scrub.forEach(scrubRow => scrubRow[Country.Scrub.Columns.Code.title] = scrubRow[Country.Scrub.Columns.Code.title] + '');
   const scrubRegionCodes = getMapFromHeaders(scrub, Country.Scrub.Columns.Code.title, Country.Scrub.Columns.Region.title);
-  const leadSchedulesByRegion = leadSchedules.reduce(
+  const userSchedulesByRegion = userSchedules.reduce(
     (regions, schedule, index) => {
       const region = scrubRegionCodes[advisors[index]["upper"].substr(0,3)];
       if (!region) {
@@ -172,7 +172,7 @@ const getLeadScheduleByRegion = (
     {}
   );
   const result = Object.fromEntries(
-    Object.entries(leadSchedulesByRegion).map(
+    Object.entries(userSchedulesByRegion).map(
       ([region, schedulesByRegion]) => {
         return [
           region,
@@ -180,9 +180,9 @@ const getLeadScheduleByRegion = (
             return advisorSchedule.map((scheduleDay, index) => {
               return {
                 date: scheduleDay.date,
-                leads:
-                  scheduleDay.leads +
-                  (sumSchedule[index] ? sumSchedule[index].leads : 0),
+                users:
+                  scheduleDay.users +
+                  (sumSchedule[index] ? sumSchedule[index].users : 0),
               };
             });
           }, {}),
@@ -193,19 +193,19 @@ const getLeadScheduleByRegion = (
   return result;
 };
 
-const getPromoLeadScheduleByRegion = (
+const getPromoUserScheduleByRegion = (
   advisors,
   currentDate = DateTime.local(),
   scrub
 ) => {
-  const promoLeadSchedules = advisors.map((advisor) =>
-    getPromoLeadSchedule(advisor, currentDate)
+  const promoUserSchedules = advisors.map((advisor) =>
+    getPromoUserSchedule(advisor, currentDate)
   );
   
   
   scrub.forEach(scrubRow => scrubRow[Country.Scrub.Columns.Code.title] = scrubRow[Country.Scrub.Columns.Code.title] + '');
   const scrubRegionCodes = getMapFromHeaders(scrub, Country.Scrub.Columns.Code.title, Country.Scrub.Columns.Region.title);
-  const promoLeadSchedulesByRegion = promoLeadSchedules.reduce(
+  const promoUserSchedulesByRegion = promoUserSchedules.reduce(
     (regions, schedule, index) => {
       const region = scrubRegionCodes[advisors[index]["upper"].substr(0,3)];
       if (!region) {
@@ -225,7 +225,7 @@ const getPromoLeadScheduleByRegion = (
     {}
   );
   const result = Object.fromEntries(
-    Object.entries(promoLeadSchedulesByRegion).map(
+    Object.entries(promoUserSchedulesByRegion).map(
       ([region, schedulesByRegion]) => {
         return [
           region,
@@ -233,9 +233,9 @@ const getPromoLeadScheduleByRegion = (
             return advisorSchedule.map((scheduleDay, index) => {
               return {
                 date: scheduleDay.date,
-                promoLeads:
-                  scheduleDay.promoLeads +
-                  (sumSchedule[index] ? sumSchedule[index].promoLeads : 0),
+                promoUsers:
+                  scheduleDay.promoUsers +
+                  (sumSchedule[index] ? sumSchedule[index].promoUsers : 0),
               };
             });
           }, {}),
@@ -249,8 +249,8 @@ const getPromoLeadScheduleByRegion = (
 module.exports = {
   getLatestPeriodStart,
   getCurrentMonthDays,
-  getLeadSchedule,
-  getLeadScheduleByRegion,
-  getPromoLeadSchedule,
-  getPromoLeadScheduleByRegion,
+  getUserSchedule,
+  getUserScheduleByRegion,
+  getPromoUserSchedule,
+  getPromoUserScheduleByRegion,
 };

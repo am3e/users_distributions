@@ -1,17 +1,17 @@
 const { getDistanceFromLatLonInKm } = require("../distanceUtils");
 const Country = require("../regionUtils.js");
-const { AUM_BUCKET, aumComparisonType, aumLeadCount, tier1, tier2, tier3, tier4, pctTier1, pctTier2, pctTier3, pctTier4, pctTier5 } = require("../variables.js");
+const { AUM_BUCKET, aumComparisonType, aumUserCount, tier1, tier2, tier3, tier4, pctTier1, pctTier2, pctTier3, pctTier4, pctTier5 } = require("../variables.js");
 
-const calculateDistances = (leads, advisors) => {
-  return leads
+const calculateDistances = (users, advisors) => {
+  return users
     .reduce((acc, a) => [...acc, ...advisors.map((b) => [a, b])], [])
-    .filter(([lead, advisor]) => lead[Country.Columns.Region.title] === advisor[Country.Columns.Region.title])
-    .map(([lead, advisor]) => ({
-      lead,
+    .filter(([user, advisor]) => user[Country.Columns.Region.title] === advisor[Country.Columns.Region.title])
+    .map(([user, advisor]) => ({
+      user,
       advisor,
       distance: getDistanceFromLatLonInKm(
-        lead.Lat,
-        lead.Long,
+        user.Lat,
+        user.Long,
         advisor.Lat,
         advisor.Long
       ),
@@ -22,43 +22,43 @@ const calculateDistances = (leads, advisors) => {
     );
 };
 
-const calculateBuckets = (advisors, leadsField) => {
+const calculateBuckets = (advisors, usersField) => {
   return Object.fromEntries(advisors
     .map((advisor) => {
-      const leads = parseInt(advisor[leadsField])
+      const users = parseInt(advisor[usersField])
       return [ advisor["referral_code"], [
-        Math.ceil(leads * pctTier1),
-        Math.ceil(leads * pctTier2),
-        Math.ceil(leads * pctTier3),
-        Math.ceil(leads * pctTier4),
-        Math.ceil(leads * pctTier5),
+        Math.ceil(users * pctTier1),
+        Math.ceil(users * pctTier2),
+        Math.ceil(users * pctTier3),
+        Math.ceil(users * pctTier4),
+        Math.ceil(users * pctTier5),
       ]];
     }));
 };
 
 const calculateAumBuckets = (advisors) => {
   return Object.fromEntries(advisors
-    .map((advisor) => [advisor["referral_code"], aumLeadCount ]));
+    .map((advisor) => [advisor["referral_code"], aumUserCount ]));
 };
 
-const fullAumBucket = (count, lead_aum) => {
-  // console.log(lead_aum, count);
-  return (aumComparisonType(lead_aum,AUM_BUCKET)) && count === 0;
+const fullAumBucket = (count, user_aum) => {
+  // console.log(user_aum, count);
+  return (aumComparisonType(user_aum,AUM_BUCKET)) && count === 0;
 }
 
-const decrementAumBucket = (advisorAumBuckets, referral_code, lead_aum) => {
-  if (aumComparisonType(lead_aum,AUM_BUCKET)) {
+const decrementAumBucket = (advisorAumBuckets, referral_code, user_aum) => {
+  if (aumComparisonType(user_aum,AUM_BUCKET)) {
     advisorAumBuckets[referral_code]--;
   }
 }
-const getUnfulfilledAdvisors = (advisors, advisorLeads, leadsField) => {
+const getUnfulfilledAdvisors = (advisors, advisorUsers, usersField) => {
   return advisors.filter((advisor) => {
-    const advisorLeadsForAdvisor = advisorLeads[advisor["referral_code"]];
-    const requiredLeads = parseInt(advisor[leadsField]);
+    const advisorUsersForAdvisor = advisorUsers[advisor["referral_code"]];
+    const requiredUsers = parseInt(advisor[usersField]);
     return (
-      requiredLeads > 0  && (
-      !advisorLeadsForAdvisor ||
-      advisorLeadsForAdvisor.length < requiredLeads
+      requiredUsers > 0  && (
+      !advisorUsersForAdvisor ||
+      advisorUsersForAdvisor.length < requiredUsers
     ));
   });
 };
@@ -89,15 +89,15 @@ const decrementBucket = (bucket, distance) => {
     return bucket[4]--;
   }
 }
-const assignLeads = (leads, advisors, leadsField) => {
-  let distances = calculateDistances(leads, advisors);
+const assignUsers = (users, advisors, usersField) => {
+  let distances = calculateDistances(users, advisors);
   let currentDistances = distances;
   let unfulfilledAdvisors = advisors;
-  let advisorBuckets = calculateBuckets(advisors, leadsField);
+  let advisorBuckets = calculateBuckets(advisors, usersField);
   let advisorAumBuckets = calculateAumBuckets(advisors);
-  const leadAssignments = {};
-  const leadDistances = {};
-  const advisorLeads = {};
+  const userAssignments = {};
+  const userDistances = {};
+  const advisorUsers = {};
   let noMatches = false;
   while (!noMatches && currentDistances.length > 0 ) {
     const advisorsToFulfill = [...unfulfilledAdvisors];
@@ -105,28 +105,28 @@ const assignLeads = (leads, advisors, leadsField) => {
     let position = 0;
     while (advisorsToFulfill.length > 0 && currentDistances.length > position) {
       const match = currentDistances[position];
-      if (leadAssignments[match.lead["household_id"]]) {
+      if (userAssignments[match.user["household_id"]]) {
         currentDistances = [...currentDistances.slice(0, position), ...currentDistances.slice(position + 1)];
       } else {
         const referral_code = match.advisor["referral_code"];
-        const lead_aum = parseInt(match.lead["lead_aum"]);
+        const user_aum = parseInt(match.user["user_aum"]);
         const advisorIndex = advisorsToFulfill.findIndex(
           (advisor) => advisor["referral_code"] === referral_code
         );
         if (advisorIndex != -1 && 
           !fullBucket(advisorBuckets[referral_code],match.distance) &&
-          !fullAumBucket(advisorAumBuckets[referral_code], lead_aum)) {
+          !fullAumBucket(advisorAumBuckets[referral_code], user_aum)) {
           noMatches = false;
-          const household_id = match.lead["household_id"];
-          leadAssignments[household_id] = referral_code;
-          leadDistances[household_id] = match.distance;
-          advisorLeads[referral_code] = advisorLeads[referral_code]
-            ? [...advisorLeads[referral_code], household_id]
+          const household_id = match.user["household_id"];
+          userAssignments[household_id] = referral_code;
+          userDistances[household_id] = match.distance;
+          advisorUsers[referral_code] = advisorUsers[referral_code]
+            ? [...advisorUsers[referral_code], household_id]
             : [household_id];
           advisorsToFulfill.splice(advisorIndex, 1);
           currentDistances = [...currentDistances.slice(0, position), ...currentDistances.slice(position + 1)];
           decrementBucket(advisorBuckets[referral_code],match.distance);
-          decrementAumBucket(advisorAumBuckets, referral_code, lead_aum);
+          decrementAumBucket(advisorAumBuckets, referral_code, user_aum);
         } else {
           position++;
         }
@@ -134,15 +134,15 @@ const assignLeads = (leads, advisors, leadsField) => {
     }
     unfulfilledAdvisors = getUnfulfilledAdvisors(
       unfulfilledAdvisors,
-      advisorLeads,
-      leadsField
+      advisorUsers,
+      usersField
     );
   }
-  return [leadAssignments, advisorLeads, leadDistances, distances, unfulfilledAdvisors];
+  return [userAssignments, advisorUsers, userDistances, distances, unfulfilledAdvisors];
 };
 
 module.exports = {
   calculateDistances,
   getUnfulfilledAdvisors,
-  assignLeads,
+  assignUsers,
 };

@@ -3,11 +3,11 @@ const fs = require("fs");
 const { DateTime } = require("luxon");
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const {
-  getLeadSchedule,
-  getLeadScheduleByRegion,
-  getPromoLeadSchedule,
-  getPromoLeadScheduleByRegion,
-} = require("../leads/leads.js");
+  getUserSchedule,
+  getUserScheduleByRegion,
+  getPromoUserSchedule,
+  getPromoUserScheduleByRegion,
+} = require("../users/users.js");
 const { loadScrub } = require("../scrub/scrub.js");
 const { getMapFromHeader, parseDate } = require("../csvUtils");
 const { override } = require("./override.js");
@@ -18,16 +18,16 @@ const advisorHeaders = [
   { id: "Lat", title: "Lat" },
   { id: "Long", title: "Long" },
   { title: "Empty" },
-  { id: "TotalLeads", title: "TotalLeads" },
+  { id: "TotalUsers", title: "TotalUsers" },
   { id: "referral_code", title: "referral_code" },
   { id: "First name", title: "First name" },
   { id: "Recipient", title: "Recipient" },
-  { id: "MarketingLeads", title: "MarketingLeads" },
-  { id: "BonusLeads", title: "BonusLeads" },
+  { id: "MarketingUsers", title: "MarketingUsers" },
+  { id: "BonusUsers", title: "BonusUsers" },
   { id: "assigned_marketing_this_period", title: "assigned_marketing_this_period" },
-  { id: "subscribed_leads", title: "subscribed_leads" },
+  { id: "subscribed_users", title: "subscribed_users" },
   { id: "Copy", title: "Copy" },
-  { id: "RemaingingLeads", title: "RemaingingLeads" },
+  { id: "RemaingingUsers", title: "RemaingingUsers" },
   { id: "Difference", title: "Difference" },
   { id: "dayInMonth", title: "dayInMonth" },
   { id: "dayInPeriod", title: "dayInPeriod" },
@@ -43,7 +43,7 @@ const advisorHeaders = [
 const loadOverride = () => {
   const rows = [];
   return new Promise((resolve) => {
-    fs.createReadStream(`csv/all/Master Advisor List - Data Center - ${Country.Code} Daily Export - Advisor Leads.csv`)
+    fs.createReadStream(`csv/all/Master Advisor List - Data Center - ${Country.Code} Daily Export - Advisor Users.csv`)
       .pipe(csv())
       .on("data", (row) => rows.push(row))
       .on("end", () => resolve(rows));
@@ -68,68 +68,68 @@ const loadAdvisors = () => {
   });
 };
 
-const generateAdvisorLeads = async (currentDate, advisors, scrub) => {
-  const leadSchedules = advisors.map((advisor) =>
-    getLeadSchedule(advisor, currentDate)
+const generateAdvisorUsers = async (currentDate, advisors, scrub) => {
+  const userSchedules = advisors.map((advisor) =>
+    getUserSchedule(advisor, currentDate)
   );
-  const leadPromoSchedules = advisors.map((advisor) =>
-    getPromoLeadSchedule(advisor, currentDate)
+  const userPromoSchedules = advisors.map((advisor) =>
+    getPromoUserSchedule(advisor, currentDate)
   );
 
   scrub.forEach(scrubRow => scrubRow[Country.Scrub.Columns.Code.title] = scrubRow[Country.Scrub.Columns.Code.title] + '');
   const scrubRegionCodes = getMapFromHeader(scrub, Country.Scrub.Columns.Code.title);
 
   const writer = createCsvWriter({
-    path: `csv/all/${currentDate.toISODate()}-${Country.Code}-advisor_leads.csv`,
+    path: `csv/all/${currentDate.toISODate()}-${Country.Code}-advisor_users.csv`,
     header: advisorHeaders,
   });
   writer.writeRecords(
     advisors
       .map((advisor, index) => {
-        const leadDay = leadSchedules[index].find(
+        const userDay = userSchedules[index].find(
           (daySchedule) => daySchedule.date === currentDate.toISODate()
         );
-        const promoLeadDay = leadPromoSchedules[index].find(
+        const promoUserDay = userPromoSchedules[index].find(
           (daySchedule) => daySchedule.date === currentDate.toISODate()
         );
-        const NewLeads = leadDay.leads;
+        const NewUsers = userDay.users;
         const regionCodeRows = scrubRegionCodes[advisor["upper"]] || [];
         const regionCodeRow = regionCodeRows[0] || {};
         const latestPeriodStart = parseDate(advisor["latest_period_start"]);
         const stripeCreatedAt = parseDate(advisor["stripe_created_at"]);
         const asapBonus = parseInt(advisor["asapBonus"]);
-        const promoBonus = promoLeadDay ? promoLeadDay.promoLeads : 0;
-        const marketingLeads = parseInt(advisor["marketing_this_period"]);
+        const promoBonus = promoUserDay ? promoUserDay.promoUsers : 0;
+        const marketingUsers = parseInt(advisor["marketing_this_period"]);
         const now = DateTime.local();
         const today = DateTime.local(now.year, now.month, now.day)
-        const subscribedLeads = parseInt(advisor["subscribed_leads"]);
+        const subscribedUsers = parseInt(advisor["subscribed_leads"]);
         return {
           ...advisor,
-          TotalLeads: NewLeads + (asapBonus + promoBonus || 0),
-          MarketingLeads: NewLeads,
-          BonusLeads: Math.max(0, asapBonus + promoBonus),
-          assigned_marketing_this_period: Math.max(0, NewLeads + marketingLeads),
-          dayInMonth: leadDay.dayInMonth,
+          TotalUsers: NewUsers + (asapBonus + promoBonus || 0),
+          MarketingUsers: NewUsers,
+          BonusUsers: Math.max(0, asapBonus + promoBonus),
+          assigned_marketing_this_period: Math.max(0, NewUsers + marketingUsers),
+          dayInMonth: userDay.dayInMonth,
           [Country.Columns.Region.id]: regionCodeRow[Country.Scrub.Columns.Region.title],
           Long: regionCodeRow["Long"],
           Lat: regionCodeRow["Lat"],
           Copy: "",
           Difference: latestPeriodStart.diff(stripeCreatedAt).as('days'),
           dayInPeriod: today.diff(latestPeriodStart).as('days'),
-          RemaingingLeads: Math.max(0, subscribedLeads - NewLeads - marketingLeads),
+          RemaingingUsers: Math.max(0, subscribedUsers - NewUsers - marketingUsers),
         };
       })
       .filter(
         (advisor) =>
-          advisor["TotalLeads"] != 0 && !isNaN(advisor["MarketingLeads"]) && !isNaN(advisor["BonusLeads"]) && (parseDate(advisor["latest_period_start"]) < DateTime.local()),
+          advisor["TotalUsers"] != 0 && !isNaN(advisor["MarketingUsers"]) && !isNaN(advisor["BonusUsers"]) && (parseDate(advisor["latest_period_start"]) < DateTime.local()),
       )
   );
 };
 
-const generateRegionLeads = async (currentDate, advisors, scrub) => {
-  const leadSchedule = getLeadScheduleByRegion(advisors, currentDate, scrub);
-  const leadScheduleEntries = Object.entries(leadSchedule);
-  const aRegionSchedule = leadScheduleEntries[0][1];
+const generateRegionUsers = async (currentDate, advisors, scrub) => {
+  const userSchedule = getUserScheduleByRegion(advisors, currentDate, scrub);
+  const userScheduleEntries = Object.entries(userSchedule);
+  const aRegionSchedule = userScheduleEntries[0][1];
   const regionHeaders = [
     Country.Columns.Region,
     ...aRegionSchedule.map((scheduleDay) => ({
@@ -138,18 +138,18 @@ const generateRegionLeads = async (currentDate, advisors, scrub) => {
     })),
   ];
   const writer = createCsvWriter({
-    path: `csv/all/${Country.Code}_leads_schedule.csv`,
+    path: `csv/all/${Country.Code}_users_schedule.csv`,
     header: regionHeaders,
   });
   writer.writeRecords(
-    leadScheduleEntries
-      .map(([region, leadSchedule]) => {
+    userScheduleEntries
+      .map(([region, userSchedule]) => {
         return {
           [Country.Columns.Region.id]: region,
           ...Object.fromEntries(
-            leadSchedule.map((scheduleDay) => [
+            userSchedule.map((scheduleDay) => [
               scheduleDay.date,
-              scheduleDay.leads,
+              scheduleDay.users,
             ])
           ),
         };
@@ -159,10 +159,10 @@ const generateRegionLeads = async (currentDate, advisors, scrub) => {
   );
 };
 
-const generateRegionPromoLeads = async (currentDate, advisors, scrub) => {
-  const promoLeadSchedule = getPromoLeadScheduleByRegion(advisors, currentDate, scrub);
-  const leadPromoScheduleEntries = Object.entries(promoLeadSchedule);
-  const aRegionPromoSchedule = leadPromoScheduleEntries[0][1];
+const generateRegionPromoUsers = async (currentDate, advisors, scrub) => {
+  const promoUserSchedule = getPromoUserScheduleByRegion(advisors, currentDate, scrub);
+  const userPromoScheduleEntries = Object.entries(promoUserSchedule);
+  const aRegionPromoSchedule = userPromoScheduleEntries[0][1];
   const regionHeaders = [
     Country.Columns.Region,
     ...aRegionPromoSchedule.map((scheduleDay) => ({
@@ -171,18 +171,18 @@ const generateRegionPromoLeads = async (currentDate, advisors, scrub) => {
     })),
   ];
   const writer = createCsvWriter({
-    path: `csv/all/${Country.Code}_promoleads_schedule.csv`,
+    path: `csv/all/${Country.Code}_promousers_schedule.csv`,
     header: regionHeaders,
   });
   writer.writeRecords(
-    leadPromoScheduleEntries
-      .map(([region, promoLeadSchedule]) => {
+    userPromoScheduleEntries
+      .map(([region, promoUserSchedule]) => {
         return {
           [Country.Columns.Region.id]: region,
           ...Object.fromEntries(
-            promoLeadSchedule.map((scheduleDay) => [
+            promoUserSchedule.map((scheduleDay) => [
               scheduleDay.date,
-              scheduleDay.promoLeads,
+              scheduleDay.promoUsers,
             ])
           ),
         };
@@ -198,12 +198,12 @@ const generateAll = async () => {
 
   const now = DateTime.local();
   const today = DateTime.local(now.year, now.month, now.day);
-  generateAdvisorLeads(today, overrideAdvisors, scrub);
-  generateRegionLeads(today, overrideAdvisors, scrub);
-  generateRegionPromoLeads(today, overrideAdvisors, scrub);
+  generateAdvisorUsers(today, overrideAdvisors, scrub);
+  generateRegionUsers(today, overrideAdvisors, scrub);
+  generateRegionPromoUsers(today, overrideAdvisors, scrub);
 
   // const tomorrow = today.plus({days:1});
-  // generateAdvisorLeads(tomorrow, overrideAdvisors, scrub);
+  // generateAdvisorUsers(tomorrow, overrideAdvisors, scrub);
 };
 
 generateAll();

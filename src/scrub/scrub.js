@@ -24,8 +24,8 @@ const headers = [
   { id: "primary_age", title: "primary_age" },
   { id: "house_value", title: "house_value" },
   { id: "child_count", title: "child_count" },
-  { id: "lead_income", title: "lead_income" },
-  { id: "lead_aum", title: "lead_aum" },
+  { id: "user_income", title: "user_income" },
+  { id: "user_aum", title: "user_aum" },
   { id: "Type", title: "Type" },
   { id: "first_name", title: "first_name" },
   { id: "email", title: "email" },
@@ -246,7 +246,7 @@ const validateVerified = (row) => {
     return "not verified";
   }
 };
-//remove stale leads
+//remove stale users
 
 //two inventory lists: 1 file 0-5days ago marketing-inventory, 6days-51 days ago <bonus-inventory
 //assignment, if bonus-inventory created first and if there is still a need then use needs-inventory
@@ -307,9 +307,9 @@ const validateGroup = (row) => {
 const validateIncome = (row) => {
   const childCount = parseInt(row["child_count"]);
   if (
-    (childCount > 0 && row["lead_income"] < 50000 && row["lead_aum"] < 25000) || 
-    (childCount === 0 && row["lead_income"] < 70000 && row["lead_aum"] < 70000)) {
-      return "low lead quality";
+    (childCount > 0 && row["user_income"] < 50000 && row["user_aum"] < 25000) || 
+    (childCount === 0 && row["user_income"] < 70000 && row["user_aum"] < 70000)) {
+      return "low user quality";
     }
   }
 const validateAge = (row) => {
@@ -375,8 +375,8 @@ const scrubRow = (
   scrubDispositions,
   scrubAssignments
 ) => {
-  row["lead_income"] = sumColumns(row, ["primary_income", "secondary_income"]);
-  row["lead_aum"] = Country.Scrub.SumLeadAum(row);
+  row["user_income"] = sumColumns(row, ["primary_income", "secondary_income"]);
+  row["user_aum"] = Country.Scrub.SumUserAum(row);
   row["postal_code"] = Country.Scrub.CleanRegionalCode(row["postal_code"]);
   const regionCodeRows = scrubRegionCodes[row["postal_code"]];
   if (regionCodeRows) {
