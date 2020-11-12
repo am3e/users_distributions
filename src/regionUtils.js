@@ -108,5 +108,6 @@ const Countries = {
   US: US
 }
 
+console.log("");
 console.log('running for ' + process.argv[2]);
 module.exports = Countries[process.argv[2]];

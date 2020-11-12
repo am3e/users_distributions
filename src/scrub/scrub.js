@@ -73,6 +73,16 @@ const scrub_inventory = [
   { id: "email", title: "email" },
 ];
 
+salesExportHeaders = [
+  { id: "inserted_at", title: "inserted_at" },
+  { id: "Sales_Export", title: "Sales_Export" },
+  { id: "first_name", title: "first_name" },
+  { id: "email", title: "email" },
+  { id: "phone", title: "phone" },
+  Country.Columns.Region,
+  Country.Code,
+]
+
 let lasttime = new Date().getTime();
 const snapshot = (message) => {
   const newtime = new Date().getTime();
@@ -178,6 +188,10 @@ const cleanGroup = (group) => {
     return cleanGroup.substring(0, 4);
   } else if (cleanGroup.startsWith("TK")) {
     return cleanGroup.substring(0, 2);
+  } else if (cleanGroup.startsWith("OB")) {
+    return cleanGroup.substring(0, 2);
+  } else if (cleanGroup.startsWith("TW")) {
+    return cleanGroup.substring(0, 2);
   } else if (cleanGroup.startsWith("TIK")) {
     return "TK";
   }
@@ -268,7 +282,7 @@ const rowType = (insertdate) => {
 }
 
 const validateScrubbed = (row) => {
-  row["Scrubbed"] && console.log(row["Scrubbed"], row["household_id"]);
+  // row["Scrubbed"] && console.log(row["Scrubbed"], row["household_id"]);
   if (row["Scrubbed"] === row["household_id"]) {
     row["Scrubbed"] = "scrubbing";
     return;
@@ -285,7 +299,7 @@ const validateDispositions = (row) => {
 };
 
 const validateGroup = (row) => {
-  if (row["group"] !== "FB" && row["group"] !== "ORG" && row["group"] !== "BLOG" && row["group"] !== "GA" && row["group"] !== "LI" && row["group"] !== "VN" && row["group"] !== "YT" && row["group"] !== "SC" && row["group"] !== "RED" && row["group"] !== "TJ" && row["group"] !== "SPOT" && row["group"] !== "TK") {
+  if (row["group"] !== "FB" && row["group"] !== "ORG" && row["group"] !== "BLOG" && row["group"] !== "GA" && row["group"] !== "LI" && row["group"] !== "VN" && row["group"] !== "YT" && row["group"] !== "SC" && row["group"] !== "RED" && row["group"] !== "TJ" && row["group"] !== "SPOT" && row["group"] !== "TK" && row["group"] !== "OB" && row["group"] !== "TW" && row["group"].startsWith("dnc-")) {
     return "not inventory";
   }
 };
@@ -316,6 +330,13 @@ const validateUnique = (row, scrubAdvisorEmails, scrubInvalidNames, scrubInvalid
       return `older plan/${phoneRows.length}`;
     }
     row["Issue"] = `newest plan/${phoneRows.length}`;
+    return;
+  }
+};
+
+const exportGroup = (row) => {
+  if (row["group"].startsWith("dnc-")) {
+    row["Sales_Export"] = "Yes";
     return;
   }
 };
@@ -371,6 +392,7 @@ const scrubRow = (
   row["group"] = cleanGroup(row["group"]);
   row["appointment"] = scrubAppointment(row["appointment"]);
   row["Type"] = rowType(row["inserted_at"]);
+  row["Group"] = "";
   row["Reason"] = validateRow(
     row,
     [
@@ -387,6 +409,7 @@ const scrubRow = (
       validateFirstName,
       validateRealEmailName,
       validateRealEmailDomain,
+      exportGroup,
     ],
     scrubAdvisorEmails,
     scrubInvalidNames,
@@ -415,7 +438,7 @@ const scrub = async () => {
     "household_id"
   );
   
-  console.log(Object.keys(manualScrubRows[0])[0].split(''), "household_id".split(''));
+  // console.log(Object.keys(manualScrubRows[0])[0].split(''), "household_id".split(''));
   const scrubPhone = getMapFromHeaders(scrubRows, "Area Code", Country.Scrub.Columns.RegionCode.id);
   const scrubDispositions = getMapFromHeaders(
     dispositionRows,
@@ -453,7 +476,7 @@ const scrub = async () => {
 
   const userPhoneToRow = getMapFromHeader(userRows, "phone");
   const scrubRegionCodes = getMapFromHeader(scrubRows, Country.Scrub.Columns.Code.id);
-  const inventory = [], dnd = [], scrubList =[];
+  const inventory = [], dnd = [], scrubList = [], salesExport = [];
   userRows.forEach((row) => {
     scrubRow(
     row,
@@ -473,24 +496,30 @@ const scrub = async () => {
     } else {
       inventory.push(row);
     }
-    if (!row) {
-      return "nothing";
-    } else if ((row["email"] !== "") && (row["Scrubbed"] !== "scrubbing") && (parseDate(row["inserted_at"]) >= today.minus({days:5}))) {
+    if ((row["email"] !== "") && (row["Scrubbed"] !== "scrubbing") && (parseDate(row["inserted_at"]) >= today.minus({days:5}))) {
       scrubList.push(row);
-    } else {
-      return "nothing";
+    }
+    if (row["Sales_Export"] === "Yes") {
+    salesExport.push(row);
     }
   });
-
+  console.log("\x1b[45m", "User Summary", "\x1b[0m");
   console.log(`${inventory.length} rows in inventory`);
   console.log(`${scrubList.length} rows in scrubList`);
   console.log(`${dnd.length} rows in dnd`);
+  console.log(`${salesExport.length} rows in salesExport`);
+
   snapshot("scrubbed");
   const inventoryWriter = createCsvWriter({
     path: `csv/all/${Country.Code}_inventory.csv`,
     header: headers,
   });
   inventoryWriter.writeRecords(inventory);
+  const salesExportWriter = createCsvWriter({
+    path: `csv/all/${Country.Code}_salesExport.csv`,
+    header: salesExportHeaders,
+  });
+  salesExportWriter.writeRecords(salesExport);
   const scrubCheckWriter = createCsvWriter({
     path: `csv/all/${Country.Code}_inventory-scrub.csv`,
     header: scrub_inventory,

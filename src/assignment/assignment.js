@@ -42,7 +42,7 @@ const calculateAumBuckets = (advisors) => {
 };
 
 const fullAumBucket = (count, lead_aum) => {
-  console.log(lead_aum, count);
+  // console.log(lead_aum, count);
   return (aumComparisonType(lead_aum,AUM_BUCKET)) && count === 0;
 }
 

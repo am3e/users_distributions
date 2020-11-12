@@ -90,32 +90,40 @@ const generateAll = async (currentDate) => {
     })
   );
   
+  console.log("");
   const unassignedLeadsByRegion = groupBy(leads.filter(lead => !leadAssignments[lead["household_id"]]), Country.Columns.Region.title);
-  console.log(`Unassigned Leads:`);
+  console.log("\x1b[45m", "Unassigned Leads:", "\x1b[0m");
   Object.keys(unassignedLeadsByRegion).forEach(region => {
     console.log(`${region}, ${unassignedLeadsByRegion[region].length}`);
   })
-
+  console.log("");
+  console.log("\x1b[45m", "Quick Review - Unfulfilled", "\x1b[0m");
   console.log(['*referral_code', 'Region', 'fulfilled', 'unfulfilled'].join(','));
   unfulfilledAdvisors.map(advisor => {
     const leads = advisorLeads[advisor["referral_code"]];
     const fulfilled = leads ? leads.length : 0;
     if (advisor['TotalLeads'] - fulfilled > 0) {
-      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, advisor['TotalLeads'] - fulfilled].join(","));
-    }
+      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, (advisor['TotalLeads'] - fulfilled || 0)].join(","));
+    } 
   });
-
+  console.log("");
+  console.log("\x1b[45m", "AUM Review", "\x1b[0m");
   console.log(['*referral_code', 'lead_aum'].join(','));
   Object.entries(advisorLeads).map(([referral_code, household_ids]) => {
     const avgLeadAum = household_ids.reduce((sum,household_id) => {
       const lead = leads.find((lead) => lead["household_id"] === household_id);
       return sum + parseInt(lead["lead_aum"]);
     },0)/ household_ids.length;
-    if (avgLeadAum < 120000) {
-      console.log([referral_code, avgLeadAum.toFixed(0)].join(","));
+    if (avgLeadAum < 125000) {
+      console.log("issue -" + [referral_code, avgLeadAum.toFixed(0)].join(","));
+    } else if (avgLeadAum > 125000) {
+      console.log("no issue -" + [referral_code, avgLeadAum.toFixed(0)].join(","));
+    } else {
+      console.log("issue - no aum, " + referral_code);
     }
   })
-
+  console.log("");
+  console.log("\x1b[45m", "Advisor User Averages", "\x1b[0m");
   console.log(['*referral_code', 'fulfilled', 'distance', 'house value', 'child count', 'age', 'lead income','lead_aum'].join(','));
   Object.entries(advisorLeads).map(([referral_code, household_ids]) => {
     if(household_ids.length === 0) {

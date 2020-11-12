@@ -12,6 +12,8 @@ const override = async (overrideRows, advisors) => {
     return map;
   }, 
 {});
+
+  console.log("\x1b[45m", "Import Referral Codes", "\x1b[0m");
   return advisors.map (advisor => {
     const overrideRow = overridesById[advisor["stripe_customer_id"]];
     if ( !overrideRow ) {
@@ -26,7 +28,7 @@ const override = async (overrideRows, advisors) => {
     if ( brokenRefCode !== advisor["referral_code"]) {
       console.log([brokenRefCode, advisor["stripe_customer_id"], advisor["referral_code"]].join(","));
     }
-
+    
     return {
       ...advisor,
       "Ref/Group": (overrideRow["Ref/Group"]),

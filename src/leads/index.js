@@ -138,7 +138,7 @@ const generateRegionLeads = async (currentDate, advisors, scrub) => {
     })),
   ];
   const writer = createCsvWriter({
-    path: `csv/all/${currentDate.toISODate()}-${Country.Code}_leads_schedule.csv`,
+    path: `csv/all/${Country.Code}_leads_schedule.csv`,
     header: regionHeaders,
   });
   writer.writeRecords(
@@ -171,7 +171,7 @@ const generateRegionPromoLeads = async (currentDate, advisors, scrub) => {
     })),
   ];
   const writer = createCsvWriter({
-    path: `csv/all/${currentDate.toISODate()}-${Country.Code}_promoleads_schedule.csv`,
+    path: `csv/all/${Country.Code}_promoleads_schedule.csv`,
     header: regionHeaders,
   });
   writer.writeRecords(

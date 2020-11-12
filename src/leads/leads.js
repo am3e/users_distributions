@@ -20,7 +20,6 @@ const promoLeadWeeks = {
   15: { 1: 0, 8: 10, 15: 5, 22: 0 },
   20: { 1: 0, 8: 10, 15: 10, 22: 0 },
 };
-
 const getLatestPeriodStart = (startDate, currentDate = DateTime.local()) => {
   const months = Math.floor(
     currentDate.diff(startDate, "months").toObject().months
@@ -52,7 +51,9 @@ const getLeadSchedule = (
   const leadSchedule = [];
   const weeks = leadWeeks[advisor["subscribed_leads"]];
   if (!weeks) {
-    console.error(`${advisor["stripe_customer_id"]} subscribed_leads_amount not found for ${advisor["subscribed_leads"]}`);
+    console.error(
+    `${advisors[index]["referral_code"]} - (${advisors[index]["stripe_customer_id"]}) subscribed_leads_amount not found for ${advisor["subscribed_leads"]}`
+    );
     return;
   }
   // let bonus = (parseInt(advisor["BonusLeads"])) + (parseInt(advisor["ImmediateBonusLeads"]));
@@ -100,7 +101,7 @@ const getPromoLeadSchedule = (
   const promoLeadSchedule = [];
   const promoWeeks = promoLeadWeeks[promoBonus];
   if (!promoWeeks) {
-    console.error(`${advisor["stripe_customer_id"]} bonus_leads_amount not found for ${advisor["promoBonus"]}`);
+    // console.error(`${advisor["stripe_customer_id"]} bonus_leads_amount not found for ${advisor["promoBonus"]}`);
     return promoLeadSchedule;
   }
   let bonus = (parseInt(advisor["asapBonus"]));
@@ -148,7 +149,7 @@ const getLeadScheduleByRegion = (
     getLeadSchedule(advisor, currentDate)
   );
   
-  
+  console.log("\x1b[45m", "Issue with Region Code", "\x1b[0m");
   scrub.forEach(scrubRow => scrubRow[Country.Scrub.Columns.Code.title] = scrubRow[Country.Scrub.Columns.Code.title] + '');
   const scrubRegionCodes = getMapFromHeaders(scrub, Country.Scrub.Columns.Code.title, Country.Scrub.Columns.Region.title);
   const leadSchedulesByRegion = leadSchedules.reduce(
@@ -156,7 +157,7 @@ const getLeadScheduleByRegion = (
       const region = scrubRegionCodes[advisors[index]["upper"].substr(0,3)];
       if (!region) {
         console.error(  
-          `${advisors[index]["stripe_customer_id"]} region not found for code ${advisors[index]["upper"]}`
+          `Users for ${advisors[index]["referral_code"]} - (${advisors[index]["stripe_customer_id"]}) region not found for code ${advisors[index]["upper"]}`
         );
       }
       advisors[index][Country.Columns.Region.id] = region;
@@ -209,7 +210,7 @@ const getPromoLeadScheduleByRegion = (
       const region = scrubRegionCodes[advisors[index]["upper"].substr(0,3)];
       if (!region) {
         console.error(  
-          `${advisors[index]["stripe_customer_id"]} region not found for code ${advisors[index]["upper"]}`
+          `Bonus for ${advisors[index]["referral_code"]} - (${advisors[index]["stripe_customer_id"]}) region not found for code ${advisors[index]["upper"]}`
         );
       }
       advisors[index][Country.Columns.Region.id] = region;
