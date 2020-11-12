@@ -11,8 +11,8 @@
     "scrub-us": "node src/scrub/index.js US",
     "needs-us": "node src/needs/index.js US",
     "assign-us": "node src/assignment/index.js US",
-    "us": "node src/scrub/index.js US;node src/needs/index.js US;node src/assignment/index.js US",
-    "ca": "node src/scrub/index.js CA;node src/needs/index.js CA;node src/assignment/index.js CA",
+    "us": "node src/scrub/index.js US && node src/needs/index.js US && node src/assignment/index.js US",
+    "ca": "node src/scrub/index.js CA && node src/needs/index.js CA && node src/assignment/index.js CA",
     "test": "mocha src/test/**/*"
   },
   "author": "",
