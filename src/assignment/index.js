@@ -115,11 +115,11 @@ const generateAll = async (currentDate) => {
       return sum + parseInt(user["user_aum"]);
     },0)/ household_ids.length;
     if (avgUserAum < 125000) {
-      console.log("issue -" + [referral_code, avgUserAum.toFixed(0)].join(","));
+      console.log("\x1b[31m", "issue - " + [referral_code, avgUserAum.toFixed(0)].join(","), "\x1b[0m");
     } else if (avgUserAum > 125000) {
-      console.log("no issue -" + [referral_code, avgUserAum.toFixed(0)].join(","));
+      console.log("no issue - " + [referral_code, avgUserAum.toFixed(0)].join(","));
     } else {
-      console.log("issue - no aum, " + referral_code);
+      console.log("\x1b[31m", "issue - no aum, " + referral_code, "\x1b[0m");
     }
   })
   console.log("");

@@ -6,13 +6,13 @@
   "scripts": {
     "email": "node src/scrub/email.js",
     "scrub-ca": "node src/scrub/index.js CA",
-    "users-ca": "node src/users/index.js CA",
+    "needs-ca": "node src/needs/index.js CA",
     "assign-ca": "node src/assignment/index.js CA",
     "scrub-us": "node src/scrub/index.js US",
-    "users-us": "node src/users/index.js US",
+    "needs-us": "node src/needs/index.js US",
     "assign-us": "node src/assignment/index.js US",
-    "us": "node src/scrub/index.js US;node src/users/index.js US;node src/assignment/index.js US",
-    "ca": "node src/scrub/index.js CA;node src/users/index.js CA;node src/assignment/index.js CA",
+    "us": "node src/scrub/index.js US;node src/needs/index.js US;node src/assignment/index.js US",
+    "ca": "node src/scrub/index.js CA;node src/needs/index.js CA;node src/assignment/index.js CA",
     "test": "mocha src/test/**/*"
   },
   "author": "",

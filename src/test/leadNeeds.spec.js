@@ -5,7 +5,7 @@ const {
   getCurrentMonthDays,
   getUserSchedule,
   getUserScheduleByProvince,
-} = require("../users/users.js");
+} = require("../needs/needs.js");
 
 describe("userNeeds", () => {
   const scrub = [

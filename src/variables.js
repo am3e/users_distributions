@@ -1,7 +1,7 @@
 
 //Change for unassigned users
-const daysOutFree = 240;
-const daysOutBonus = 6;
+const daysOutFree = 10;
+const daysOutBonus = 5;
 
 //AUM threshold
 const AUM_BUCKET = 125000;
