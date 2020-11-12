@@ -25,7 +25,7 @@ const advisorHeaders = [
   { id: "MarketingUsers", title: "MarketingUsers" },
   { id: "BonusUsers", title: "BonusUsers" },
   { id: "assigned_marketing_this_period", title: "assigned_marketing_this_period" },
-  { id: "subscribed_users", title: "subscribed_users" },
+  { id: "subscribed_leads", title: "subscribed_users" },
   { id: "Copy", title: "Copy" },
   { id: "RemaingingUsers", title: "RemaingingUsers" },
   { id: "Difference", title: "Difference" },

@@ -1,4 +1,4 @@
-const serverAcceptsEmail = require("server-accepts-email");
+// const serverAcceptsEmail = require("server-accepts-email");
 const csv = require("csv-parser");
 const createCsvWriter = require("csv-writer").createObjectCsvWriter;
 const fs = require("fs");
