@@ -68,7 +68,8 @@ const getUserSchedule = (
     );
     const dayInMonth = getCurrentMonthDays(latestPeriodStart, calculationDay);
     let usersForToday = weeks[dayInMonth] || 0;
-    //console.log([advisor["referral_code"],advisor["latest_period_start"], calculationDay.toISODate(), latestPeriodStart.toISODate(), dayInMonth].join(","));
+    // console.log([advisor["referral_code"],advisor["latest_period_start"], calculationDay.toISODate(), latestPeriodStart.toISODate(), dayInMonth].join(","));
+    // console.log([advisor["referral_code"], calculationDay.toISODate(),[advisor["subscribed_leads"]], usersForToday].join(","));
     if (isHolidayOrWeekend(calculationDay)) {
       pendingUsers += usersForToday;
       usersForToday = 0;
@@ -177,6 +178,9 @@ const getUserScheduleByRegion = (
         return [
           region,
           schedulesByRegion.reduce((sumSchedule, advisorSchedule) => {
+            if (advisorSchedule.length === 0) {
+              return sumSchedule;
+            }
             return advisorSchedule.map((scheduleDay, index) => {
               return {
                 date: scheduleDay.date,
@@ -185,7 +189,7 @@ const getUserScheduleByRegion = (
                   (sumSchedule[index] ? sumSchedule[index].users : 0),
               };
             });
-          }, {}),
+          }, []),
         ];
       }
     )
@@ -230,6 +234,9 @@ const getPromoUserScheduleByRegion = (
         return [
           region,
           schedulesByRegion.reduce((sumSchedule, advisorSchedule) => {
+            if (advisorSchedule.length === 0) {
+              return sumSchedule;
+            }
             return advisorSchedule.map((scheduleDay, index) => {
               return {
                 date: scheduleDay.date,
@@ -238,7 +245,7 @@ const getPromoUserScheduleByRegion = (
                   (sumSchedule[index] ? sumSchedule[index].promoUsers : 0),
               };
             });
-          }, {}),
+          }, []),
         ];
       }
     )
