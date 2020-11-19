@@ -141,15 +141,23 @@ const generateFullSchedule = async (currentDate, advisors, scrub) => {
     userFullScheduleEntries.map(
       ([region, schedulesByRegion]) => {
         const promoSchedulesByRegion = userPromoSchedule[region];
-        // console.log(region);
-        schedulesByRegion.map(
-          (scheduleDay, index) => {
-            const promoSchedule = promoSchedulesByRegion[index];
-            // console.log(scheduleDay.date, scheduleDay.users, promoSchedule.promoUsers);
-            scheduleDay.users = scheduleDay.users + (promoSchedule.promoUsers || 0);
-            // console.log(scheduleDay.date, scheduleDay.users);
-          }
-        )
+        if (!promoSchedulesByRegion || promoSchedulesByRegion.length == 0) {
+          console.error('theres no promo schedule for ' + region);
+        } else {
+          // console.log(region);
+          schedulesByRegion.map(
+            (scheduleDay, index) => {
+              const promoSchedule = promoSchedulesByRegion[index];
+              if (!promoSchedule) {
+                console.error('theres no promo schedule for ' + region + ' ' + scheduleDay.date);
+              } else {
+                // console.log(scheduleDay.date, scheduleDay.users, promoSchedule.promoUsers);
+                scheduleDay.users = scheduleDay.users + promoSchedule.promoUsers;
+                // console.log(scheduleDay.date, scheduleDay.users);
+              }
+            }
+          )
+        }
       }
     )
     const writer = createCsvWriter({
