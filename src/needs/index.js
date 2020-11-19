@@ -146,7 +146,7 @@ const generateFullSchedule = async (currentDate, advisors, scrub) => {
           (scheduleDay, index) => {
             const promoSchedule = promoSchedulesByRegion[index];
             // console.log(scheduleDay.date, scheduleDay.users, promoSchedule.promoUsers);
-            scheduleDay.users = scheduleDay.users + promoSchedule.promoUsers;
+            scheduleDay.users = scheduleDay.users + (promoSchedule.promoUsers || 0);
             // console.log(scheduleDay.date, scheduleDay.users);
           }
         )
