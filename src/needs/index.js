@@ -126,10 +126,11 @@ const generateAdvisorUsers = async (currentDate, advisors, scrub) => {
   );
 };
 
-const generateRegionUsers = async (currentDate, advisors, scrub) => {
+const generateFullSchedule = async (currentDate, advisors, scrub) => {
   const userSchedule = getUserScheduleByRegion(advisors, currentDate, scrub);
-  const userScheduleEntries = Object.entries(userSchedule);
-  const aRegionSchedule = userScheduleEntries[0][1];
+  const userPromoSchedule = getPromoUserScheduleByRegion(advisors,currentDate,scrub);
+  const userFullScheduleEntries = Object.entries(userSchedule);
+  const aRegionSchedule = userFullScheduleEntries[0][1];
   const regionHeaders = [
     Country.Columns.Region,
     ...aRegionSchedule.map((scheduleDay) => ({
@@ -137,60 +138,41 @@ const generateRegionUsers = async (currentDate, advisors, scrub) => {
       title: scheduleDay.date,
     })),
   ];
-  const writer = createCsvWriter({
-    path: `csv/all/${Country.Code}_users_schedule.csv`,
-    header: regionHeaders,
-  });
-  writer.writeRecords(
-    userScheduleEntries
-      .map(([region, userSchedule]) => {
-        return {
-          [Country.Columns.Region.id]: region,
-          ...Object.fromEntries(
-            userSchedule.map((scheduleDay) => [
-              scheduleDay.date,
-              scheduleDay.users,
-            ])
-          ),
-        };
-      })
-      .filter((row) => row[Country.Columns.Region.id])
-      .sort((row1,row2) => row1[Country.Columns.Region.id].localeCompare(row2[Country.Columns.Region.id]))
-  );
-};
-
-const generateRegionPromoUsers = async (currentDate, advisors, scrub) => {
-  const promoUserSchedule = getPromoUserScheduleByRegion(advisors, currentDate, scrub);
-  const userPromoScheduleEntries = Object.entries(promoUserSchedule);
-  const aRegionPromoSchedule = userPromoScheduleEntries[0][1];
-  const regionHeaders = [
-    Country.Columns.Region,
-    ...aRegionPromoSchedule.map((scheduleDay) => ({
-      id: scheduleDay.date,
-      title: scheduleDay.date,
-    })),
-  ];
-  const writer = createCsvWriter({
-    path: `csv/all/${Country.Code}_promousers_schedule.csv`,
-    header: regionHeaders,
-  });
-  writer.writeRecords(
-    userPromoScheduleEntries
-      .map(([region, promoUserSchedule]) => {
-        return {
-          [Country.Columns.Region.id]: region,
-          ...Object.fromEntries(
-            promoUserSchedule.map((scheduleDay) => [
-              scheduleDay.date,
-              scheduleDay.promoUsers,
-            ])
-          ),
-        };
-      })
-      .filter((row) => row[Country.Columns.Region.id])
-      .sort((row1,row2) => row1[Country.Columns.Region.id].localeCompare(row2[Country.Columns.Region.id]))
-  );
-};
+    userFullScheduleEntries.map(
+      ([region, schedulesByRegion]) => {
+        const promoSchedulesByRegion = userPromoSchedule[region];
+        // console.log(region);
+        schedulesByRegion.map(
+          (scheduleDay, index) => {
+            const promoSchedule = promoSchedulesByRegion[index];
+            // console.log(scheduleDay.date, scheduleDay.users, promoSchedule.promoUsers);
+            scheduleDay.users = scheduleDay.users + promoSchedule.promoUsers;
+            // console.log(scheduleDay.date, scheduleDay.users);
+          }
+        )
+      }
+    )
+    const writer = createCsvWriter({
+      path: `csv/all/${Country.Code}_fullschedule.csv`,
+      header: regionHeaders,
+    });
+    writer.writeRecords(
+      userFullScheduleEntries
+        .map(([region, fullSchedule]) => {
+          return {
+            [Country.Columns.Region.id]: region,
+            ...Object.fromEntries(
+              fullSchedule.map((scheduleDay) => [
+                scheduleDay.date,
+                scheduleDay.users,
+              ])
+            ),
+          };
+        })
+        .filter((row) => row[Country.Columns.Region.id])
+        .sort((row1,row2) => row1[Country.Columns.Region.id].localeCompare(row2[Country.Columns.Region.id]))
+    );
+}
 
 const generateAll = async () => {
   const [advisors, overrideRows, scrub] = await Promise.all([loadAdvisors(), loadOverride(),loadScrub()]);
@@ -199,8 +181,9 @@ const generateAll = async () => {
   const now = DateTime.local();
   const today = DateTime.local(now.year, now.month, now.day);
   generateAdvisorUsers(today, overrideAdvisors, scrub);
-  generateRegionUsers(today, overrideAdvisors, scrub);
-  generateRegionPromoUsers(today, overrideAdvisors, scrub);
+  generateFullSchedule(today, overrideAdvisors, scrub);
+  // generateRegionUsers(today, overrideAdvisors, scrub);
+  //generateRegionPromoUsers(today, overrideAdvisors, scrub);
 
   // const tomorrow = today.plus({days:1});
   // generateAdvisorUsers(tomorrow, overrideAdvisors, scrub);
