@@ -4,6 +4,8 @@ const US = {
   Code: "US",
   Holidays: {
     "2020-11-26": "Thanksgiving",
+    "2020-12-25": "Christmas",
+    "2020-12-26": "Boxing Day",
   },
   Columns: {
     Code: { id: "postal_code", title: "Zip" },
@@ -47,6 +49,8 @@ const Canada = {
     "2020-08-03": "Civic Holiday",
     "2020-09-07": "Labour Day",
     "2020-10-12": "Thanksgiving",
+    "2020-12-25": "Christmas",
+    "2020-12-26": "Boxing Day",
   },
   Columns: {
     Code: { id: "postal_code", title: "postal_code" },

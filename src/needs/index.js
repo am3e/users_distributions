@@ -17,7 +17,8 @@ const Country = require("../regionUtils.js");
 const advisorHeaders = [
   { id: "Lat", title: "Lat" },
   { id: "Long", title: "Long" },
-  { title: "Empty" },
+  Country.Columns.Region,
+  { id: "Status", title: "Status" },
   { id: "TotalUsers", title: "TotalUsers" },
   { id: "referral_code", title: "referral_code" },
   { id: "First name", title: "First name" },
@@ -36,7 +37,6 @@ const advisorHeaders = [
   { id: "Date Churned", title: "Date Churned" },
   { id: "Last Update", title: "Last Update" },
   { id: "upper", title: "Region Code" },
-  Country.Columns.Region,
 ];
 
 
@@ -93,6 +93,7 @@ const generateAdvisorUsers = async (currentDate, advisors, scrub) => {
           (daySchedule) => daySchedule.date === currentDate.toISODate()
         );
         const NewUsers = userDay.users;
+        const status = advisor["array_agg"] || "none";
         const regionCodeRows = scrubRegionCodes[advisor["upper"]] || [];
         const regionCodeRow = regionCodeRows[0] || {};
         const latestPeriodStart = parseDate(advisor["latest_period_start"]);
@@ -109,6 +110,7 @@ const generateAdvisorUsers = async (currentDate, advisors, scrub) => {
           MarketingUsers: NewUsers,
           BonusUsers: Math.max(0, asapBonus + promoBonus),
           assigned_marketing_this_period: Math.max(0, NewUsers + marketingUsers),
+          Status: status,
           dayInMonth: userDay.dayInMonth,
           [Country.Columns.Region.id]: regionCodeRow[Country.Scrub.Columns.Region.title],
           Long: regionCodeRow["Long"],
