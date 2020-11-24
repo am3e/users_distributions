@@ -494,7 +494,7 @@ const scrub = async () => {
       scrubDispositions,
       scrubAssignments
     );
-    if (row["Reason"] && !row["appointment"]) {
+    if (row["Reason"] && row["appointment"]) {
       dnd.push(row);
     } else {
       inventory.push(row);
