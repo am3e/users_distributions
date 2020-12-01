@@ -121,7 +121,7 @@ const generateAll = async (currentDate) => {
     } else if (avgUserAum > 125000) {
       console.log("no issue - " + [referral_code, region, avgUserAum.toFixed(0)].join(","));
     } else {
-      console.log("\x1b[41m", "issue - " + referral_code + ", no aum", "\x1b[0m");
+      console.log("\x1b[41m", "issue - " + referral_code + "," + region + ",no aum", "\x1b[0m");
     }
   })
   console.log("");
