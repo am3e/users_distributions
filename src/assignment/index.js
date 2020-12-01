@@ -8,27 +8,25 @@ const Country = require("../regionUtils.js");
 
 const mainHeaders = [
 
-  { id: "inserted_at", title: "inserted_at" },
-  Country.Columns.Region,
-  { id: "referred_by", title: "referred_by" },
-  { id: "first_name", title: "first_name" },
-  { id: "email", title: "email" },
-  { id: "phone", title: "phone" },
+
+  { id: "group", title: "user-source" },
   { id: "Issue", title: "Issue" },
-  { id: "Reason", title: "Reason" },
-  { id: "Scrubbed", title: "Scrubbed" },
-  { id: "distance", title: "distance" },
   { id: "house_value", title: "house_value" },
   { id: "child_count", title: "child_count" },
   { id: "primary_age", title: "primary_age" },
   { id: "user_income", title: "user_income" },
   { id: "user_aum", title: "user_aum" },
+  { id: "inserted_at", title: "inserted_at" },
+  Country.Columns.Region,
+  { id: "Scrubbed", title: "Scrubbed" },
+  { id: "first_name", title: "first_name" },
   { title: "Empty" },
   { id: "household_id", title: "Household_ID" },
   { id: "referred_by", title: "Group" },
   { id: "email", title: "Email" },
   { id: "referral_code", title: "Ref" },
   { id: "Type", title: "Type" },
+  { id: "distance", title: "distance" },
 ];
 
 const loadFile = (path) => {
@@ -89,12 +87,13 @@ const generateAll = async (currentDate) => {
       }
     })
   );
-  
+
   console.log("");
   const unassignedUsersByRegion = groupBy(users.filter(user => !userAssignments[user["household_id"]]), Country.Columns.Region.title);
   console.log("\x1b[45m", "Unassigned Users:", "\x1b[0m");
   Object.keys(unassignedUsersByRegion).forEach(region => {
-    console.log(`${region}, ${unassignedUsersByRegion[region].length}`);
+    const unassignedUsersByType = groupBy(unassignedUsersByRegion[region], "Type");
+    console.log(`${region}, ${unassignedUsersByRegion[region].length}, ${unassignedUsersByType['Marketing']?unassignedUsersByType['Marketing'].length:0}, ${unassignedUsersByType['Bonus']?unassignedUsersByType['Bonus'].length:0}`);
   })
   console.log("");
   console.log("\x1b[45m", "Quick Review - Unfulfilled", "\x1b[0m");
@@ -114,12 +113,15 @@ const generateAll = async (currentDate) => {
       const user = users.find((user) => user["household_id"] === household_id);
       return sum + parseInt(user["user_aum"]);
     },0)/ household_ids.length;
+      const advisor = advisors.find((advisor) => advisor["referral_code"] === referral_code);
+      const region = advisor[Country.Columns.Region.title];
+    // const region = user[Country.Columns.Region.title];
     if (avgUserAum < 125000) {
-      console.log("\x1b[31m", "issue - " + [referral_code, avgUserAum.toFixed(0)].join(","), "\x1b[0m");
+      console.log("\x1b[41m", "issue - " + [referral_code, region, avgUserAum.toFixed(0)].join(","), "\x1b[0m");
     } else if (avgUserAum > 125000) {
-      console.log("no issue - " + [referral_code, avgUserAum.toFixed(0)].join(","));
+      console.log("no issue - " + [referral_code, region, avgUserAum.toFixed(0)].join(","));
     } else {
-      console.log("\x1b[31m", "issue - no aum, " + referral_code, "\x1b[0m");
+      console.log("\x1b[41m", "issue - " + referral_code + ", no aum", "\x1b[0m");
     }
   })
   console.log("");
@@ -153,7 +155,9 @@ const generateAll = async (currentDate) => {
         const user = users.find((user) => user["household_id"] === household_id);
         return sum + parseInt(user["user_aum"]);
       },0)/ household_ids.length;
-      console.log([referral_code, household_ids.length, avgUserDistance.toFixed(0), avgHomeseValue.toFixed(0), avgChildCount.toFixed(0), avgAge.toFixed(0),avgUserIncome.toFixed(0), avgUserAum.toFixed(0)].join(","));
+      const advisor = advisors.find((advisor) => advisor["referral_code"] === referral_code);
+      const region = advisor[Country.Columns.Region.title];
+      console.log([referral_code, household_ids.length, region, avgUserDistance.toFixed(0), avgHomeseValue.toFixed(0), avgChildCount.toFixed(0), avgAge.toFixed(0),avgUserIncome.toFixed(0), avgUserAum.toFixed(0)].join(","));
     }
   })
   

@@ -7,6 +7,7 @@ const US = {
     "2020-12-25": "Christmas",
     "2020-12-26": "Boxing Day",
   },
+  Copy: "Households notification",
   Columns: {
     Code: { id: "postal_code", title: "Zip" },
     Region: { id: "State", title: "State" },
@@ -52,6 +53,7 @@ const Canada = {
     "2020-12-25": "Christmas",
     "2020-12-26": "Boxing Day",
   },
+  Copy: "New Planswell Households",
   Columns: {
     Code: { id: "postal_code", title: "postal_code" },
     Region: { id: "Province", title: "Province" },
