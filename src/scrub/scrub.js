@@ -17,7 +17,6 @@ const headers = [
   { id: "group", title: "group" },
   Country.Columns.Region,
   { id: "Scrubbed", title: "Scrubbed" },
-  { id: "Scrub", title: "Scrub" },
   { id: "household_id", title: "household_id" },
   { id: "referred_by", title: "referred_by" },
   { id: "email", title: "email" },
@@ -28,13 +27,12 @@ const headers = [
   { id: "user_aum", title: "user_aum" },
   { id: "Type", title: "Type" },
   { id: "first_name", title: "first_name" },
-  { id: "email", title: "email" },
   { id: "phone", title: "phone" },
   { id: "appointment", title: "appointment" },
   { id: "notes", title: "notes" },
   { id: "Issue", title: "Issue" },
   { id: "Reason", title: "Reason" },
-  { id: "uuid", title: "uuid" },
+  { id: "user_id", title: "user_id" },
   { id: "verified", title: "verified" },
   { id: "primary_income", title: "primary_income" },
   { id: "secondary_income", title: "secondary_income" },
@@ -44,25 +42,11 @@ const headers = [
   { id: "other_loan_balance", title: "other_loan_balance" },
   { id: "credit_card_balance", title: "credit_card_balance" },
   { id: "line_of_credit_balance", title: "line_of_credit_balance" },
-  { id: "primary_rrsp_balance", title: "primary_rrsp_balance" },
-  { id: "primary_tfsa_balance", title: "primary_tfsa_balance" },
-  {
-    id: "primary_non_reg_external_balance",
-    title: "primary_non_reg_external_balance",
-  },
-  { id: "secondary_rrsp_balance", title: "secondary_rrsp_balance" },
-  { id: "secondary_tfsa_balance", title: "secondary_tfsa_balance" },
-  {
-    id: "secondary_non_reg_external_balance",
-    title: "secondary_non_reg_external_balance",
-  },
   { id: "child_count", title: "child_count" },
   Country.Columns.Region,
   Country.Columns.PhoneRegion,
   { id: "Disposition", title: "Disposition" },
   { id: "Assignment", title: "Assignment" },
-  { id: "first_name", title: "first_name" },
-  { id: "email", title: "email" },
 ];
 
 const scrub_inventory = [
@@ -322,6 +306,12 @@ const validateAge = (row) => {
     }
   }
 
+  const validateSavings = (row) => {
+    const savings = parseInt(row["monthly_savings"]);
+    if (savings > 100000 && row["user_aum"] < savings) {
+        return "monthly savings higher than aum";
+      }
+    }
 
 const validateUnique = (row, scrubAdvisorEmails, scrubInvalidNames, scrubInvalidNameEmails, scrubInvalidDomainEmails, userPhoneToRow) => {
   const phoneRows = userPhoneToRow[row["phone"]];
@@ -403,6 +393,7 @@ const scrubRow = (
       Country.Scrub.ValidateRegion,
       validateEmail,
       validateIncome,
+      validateSavings,
       validateAge,
       validateGroup,
       validateUnique,
