@@ -15,10 +15,11 @@ const Country = require("../regionUtils.js");
 
 
 const advisorHeaders = [
-  { id: "Lat", title: "Lat" },
-  { id: "Long", title: "Long" },
   Country.Columns.Region,
+  { id: "Difference", title: "Days since Last Payment" },
   { id: "Status", title: "Status" },
+  { id: "Date Churned", title: "Date Churned" },
+  { id: "Last Update", title: "Last Update" },
   { id: "TotalUsers", title: "TotalUsers" },
   { id: "referral_code", title: "referral_code" },
   { id: "First name", title: "First name" },
@@ -26,17 +27,17 @@ const advisorHeaders = [
   { id: "MarketingUsers", title: "MarketingUsers" },
   { id: "BonusUsers", title: "BonusUsers" },
   { id: "assigned_marketing_this_period", title: "assigned_marketing_this_period" },
-  { id: "subscribed_leads", title: "subscribed_users" },
+  { id: "assigned_bonus_this_period", title: "assigned_bonus_this_period" },
   { id: "Copy", title: "Copy" },
   { id: "RemaingingUsers", title: "RemaingingUsers" },
-  { id: "Difference", title: "Difference" },
-  { id: "dayInMonth", title: "dayInMonth" },
-  { id: "dayInPeriod", title: "dayInPeriod" },
+  // { id: "dayInMonth", title: "dayInMonth" },
+  { id: "subscribed_leads", title: "subscribed_users" },
   { id: "latest_period_start", title: "latest_period_start" },
   { id: "stripe_created_at", title: "stripe_created_at" },
-  { id: "Date Churned", title: "Date Churned" },
-  { id: "Last Update", title: "Last Update" },
+
   { id: "upper", title: "Region Code" },
+  { id: "Lat", title: "Lat" },
+  { id: "Long", title: "Long" },
 ];
 
 
@@ -99,26 +100,45 @@ const generateAdvisorUsers = async (currentDate, advisors, scrub) => {
         const latestPeriodStart = parseDate(advisor["latest_period_start"]);
         const stripeCreatedAt = parseDate(advisor["stripe_created_at"]);
         const asapBonus = parseInt(advisor["asapBonus"]);
-        const promoBonus = promoUserDay ? promoUserDay.promoUsers : 0;
+        const bankedType = promoUserDay && (advisor["banked"]);
+        const promoType = promoUserDay && !(advisor["banked"]);
+        const promoBonus = promoType ? promoUserDay.promoUsers : 0;
+        const bankedUsers = bankedType ? promoUserDay.promoUsers : 0;
         const marketingUsers = parseInt(advisor["marketing_this_period"]);
+        const bonusUsers = parseInt(advisor["bonus_this_period"]);
+
+        // console.log(promoType, advisor["referral_code"], promoBonus, advisor["banked"]);
         const now = DateTime.local();
-        const today = DateTime.local(now.year, now.month, now.day)
+        const today = DateTime.local(now.year, now.month, now.day);
         const subscribedUsers = parseInt(advisor["subscribed_leads"]);
+        const difference = Math.ceil(today.diff(latestPeriodStart).as('days'));
+        const differenceInPaymentDaysIssue = difference > 30;
+        const differenceInPaymentDays = differenceInPaymentDaysIssue ?  `${difference - 30 } days overdue` : `${difference}`;
+        const remainingUsers = Math.max(0, subscribedUsers - NewUsers - marketingUsers);
+        const differenceRequiredUsersIssue = remainingUsers > 10 && difference > 23 ;
+        const differenceRequiredUsers = differenceRequiredUsersIssue ?  remainingUsers : 0 ;
+
+        if (differenceInPaymentDaysIssue) {
+          console.log("\x1b[42m",`Payment issue: ${differenceInPaymentDays} for ${advisor["referral_code"]}`,"\x1b[0m");
+        }
+        if (differenceRequiredUsersIssue) {
+          console.log("\x1b[46m",`Required Users issue: ${differenceRequiredUsers} for ${advisor["referral_code"]}`,"\x1b[0m");
+        }
         return {
           ...advisor,
-          TotalUsers: NewUsers + (asapBonus + promoBonus || 0),
-          MarketingUsers: NewUsers,
+          TotalUsers: NewUsers + bankedUsers + (asapBonus + promoBonus || 0),
+          MarketingUsers: NewUsers + bankedUsers,
           BonusUsers: Math.max(0, asapBonus + promoBonus),
           assigned_marketing_this_period: Math.max(0, NewUsers + marketingUsers),
+          assigned_bonus_this_period: Math.max(0, NewUsers + bonusUsers),
           Status: status,
           dayInMonth: userDay.dayInMonth,
           [Country.Columns.Region.id]: regionCodeRow[Country.Scrub.Columns.Region.title],
           Long: regionCodeRow["Long"],
           Lat: regionCodeRow["Lat"],
-          Copy: "",
-          Difference: latestPeriodStart.diff(stripeCreatedAt).as('days'),
-          dayInPeriod: today.diff(latestPeriodStart).as('days'),
-          RemaingingUsers: Math.max(0, subscribedUsers - NewUsers - marketingUsers),
+          Copy: Country.Copy,
+          Difference: differenceInPaymentDays,
+          RemaingingUsers: remainingUsers,
         };
       })
       .filter(
@@ -187,6 +207,7 @@ const generateFullSchedule = async (currentDate, advisors, scrub) => {
 const generateAll = async () => {
   const [advisors, overrideRows, scrub] = await Promise.all([loadAdvisors(), loadOverride(),loadScrub()]);
   const overrideAdvisors = await override (overrideRows, advisors);
+  console.log("");
 
   const now = DateTime.local();
   const today = DateTime.local(now.year, now.month, now.day);

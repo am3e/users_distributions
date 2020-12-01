@@ -36,6 +36,7 @@ const override = async (overrideRows, advisors) => {
         Recipient: (overrideRow["Recipient"]),
         asapBonus: parseInt(overrideRow["asapBonus"]) || 0,
         promoBonus: parseInt(overrideRow["promoBonus"]) || 0,
+        banked: (overrideRow["Banked"]),
         latest_period_start: lastPeriodStartDate,
         Status: (overrideRow["Status"]),
         "upper": correctRegion,

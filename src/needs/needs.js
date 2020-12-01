@@ -149,7 +149,7 @@ const getUserScheduleByRegion = (
   const userSchedules = advisors.map((advisor) =>
     getUserSchedule(advisor, currentDate)
   );
-  
+  console.log("");
   console.log("\x1b[45m", "Issue with Region Code", "\x1b[0m");
   scrub.forEach(scrubRow => scrubRow[Country.Scrub.Columns.Code.title] = scrubRow[Country.Scrub.Columns.Code.title] + '');
   const scrubRegionCodes = getMapFromHeaders(scrub, Country.Scrub.Columns.Code.title, Country.Scrub.Columns.Region.title);
