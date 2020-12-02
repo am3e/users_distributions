@@ -90,24 +90,24 @@ const generateAll = async (currentDate) => {
 
   console.log("");
   const unassignedUsersByRegion = groupBy(users.filter(user => !userAssignments[user["household_id"]]), Country.Columns.Region.title);
-  console.log("\x1b[45m", "Unassigned Users:", "\x1b[0m");
+  console.log("\x1b[45m", "Unassigned Users: Region, Total, Marketing, Bonus", "\x1b[0m");
   Object.keys(unassignedUsersByRegion).forEach(region => {
     const unassignedUsersByType = groupBy(unassignedUsersByRegion[region], "Type");
     console.log(`${region}, ${unassignedUsersByRegion[region].length}, ${unassignedUsersByType['Marketing']?unassignedUsersByType['Marketing'].length:0}, ${unassignedUsersByType['Bonus']?unassignedUsersByType['Bonus'].length:0}`);
   })
   console.log("");
   console.log("\x1b[45m", "Quick Review - Unfulfilled", "\x1b[0m");
-  console.log(['*referral_code', 'Region', 'fulfilled', 'unfulfilled'].join(','));
+  console.log(['*referral_code', 'Region', 'fulfilled', "\x1b[41m" + 'unfulfilled' + "\x1b[0m", 'marketing', 'bonus'].join(','));
   unfulfilledAdvisors.map(advisor => {
     const users = advisorUsers[advisor["referral_code"]];
     const fulfilled = users ? users.length : 0;
     if (advisor['TotalUsers'] - fulfilled > 0) {
-      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, (advisor['TotalUsers'] - fulfilled || 0)].join(","));
+      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, "\x1b[41m" + (advisor['TotalUsers'] - fulfilled || 0) + "\x1b[0m", (advisor['MarketingUsers']), (advisor['BonusUsers'])].join(","));
     } 
   });
   console.log("");
   console.log("\x1b[45m", "AUM Review", "\x1b[0m");
-  console.log(['*referral_code', 'user_aum'].join(','));
+  console.log(['*referral_code', 'region', 'user_aum'].join(','));
   Object.entries(advisorUsers).map(([referral_code, household_ids]) => {
     const avgUserAum = household_ids.reduce((sum,household_id) => {
       const user = users.find((user) => user["household_id"] === household_id);
