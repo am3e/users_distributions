@@ -91,7 +91,7 @@ const generateAll = async (currentDate) => {
   console.log("");
   const unassignedUsersByRegion = groupBy(users.filter(user => !userAssignments[user["household_id"]]), Country.Columns.Region.title);
   console.log("\x1b[45m", "Unassigned Users: Region, Total, Marketing, Bonus", "\x1b[0m");
-  Object.keys(unassignedUsersByRegion).forEach(region => {
+  Object.keys(unassignedUsersByRegion).sort().forEach(region => {
     const unassignedUsersByType = groupBy(unassignedUsersByRegion[region], "Type");
     console.log(`${region}, ${unassignedUsersByRegion[region].length}, ${unassignedUsersByType['Marketing']?unassignedUsersByType['Marketing'].length:0}, ${unassignedUsersByType['Bonus']?unassignedUsersByType['Bonus'].length:0}`);
   })
@@ -123,7 +123,7 @@ const generateAll = async (currentDate) => {
     } else {
       console.log("\x1b[41m", "issue - " + referral_code + "," + region + ",no aum", "\x1b[0m");
     }
-  })
+  }).sort((row1,row2) => row1[Country.Columns.Region.id].localeCompare(row2[Country.Columns.Region.id]))
   console.log("");
   console.log("\x1b[45m", "Advisor User Averages", "\x1b[0m");
   console.log(['*referral_code', 'fulfilled', 'distance', 'house value', 'child count', 'age', 'user income','user_aum'].join(','));
