@@ -50,8 +50,12 @@ const Canada = {
     "2020-08-03": "Civic Holiday",
     "2020-09-07": "Labour Day",
     "2020-10-12": "Thanksgiving",
-    "2020-12-25": "Christmas",
+    // "2020-12-24": "Christmas Eve",
+    // "2020-12-25": "Christmas",
     "2020-12-26": "Boxing Day",
+    // "2020-12-31": "New Years Eve",
+    // "2020-01-01": "New Years Day",
+
   },
   Copy: "New Planswell Households",
   Columns: {
@@ -69,14 +73,7 @@ const Canada = {
       return region.trim().substring(0, 3).toUpperCase();
     },
     SumUserAum: (row) => {
-      return sumColumns(row, [
-        "primary_rrsp_balance",
-        "primary_tfsa_balance",
-        "primary_non_reg_external_balance",
-        "secondary_rrsp_balance",
-        "secondary_tfsa_balance",
-        "secondary_non_reg_external_balance",
-      ]);
+      return sumColumns(row, ["primary_aum", "secondary_aum"]);
     },
     ValidateRegion: (row) => {
       const postalProvince = row[Canada.Columns.Region.title];
