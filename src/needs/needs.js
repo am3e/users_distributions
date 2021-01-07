@@ -10,7 +10,8 @@ const userWeeks = {
   30: { 1: 10, 8: 10, 15: 10, 22: 0 },
   35: { 1: 10, 8: 10, 15: 10, 22: 5 },
   50: { 1: 10, 8: 15, 15: 10, 22: 15 },
-  60: { 1: 15, 8: 15, 15: 15, 22: 15 }
+  60: { 1: 15, 8: 15, 15: 15, 22: 15 },
+  100: { 1: 10, 8: 15, 15: 10, 22: 15 }
 };
 
 const promoUserWeeks = {
@@ -69,7 +70,9 @@ const getUserSchedule = (
     const dayInMonth = getCurrentMonthDays(latestPeriodStart, calculationDay);
     let usersForToday = weeks[dayInMonth] || 0;
     // console.log([advisor["referral_code"],advisor["latest_period_start"], calculationDay.toISODate(), latestPeriodStart.toISODate(), dayInMonth].join(","));
-    // console.log([advisor["referral_code"], calculationDay.toISODate(),[advisor["subscribed_leads"]], usersForToday].join(","));
+    //if (usersForToday > 0)  {
+    //console.log([advisor["referral_code"], calculationDay.toISODate(),[advisor["subscribed_leads"]], usersForToday].join(","));
+    //}
     if (isHolidayOrWeekend(calculationDay)) {
       pendingUsers += usersForToday;
       usersForToday = 0;
