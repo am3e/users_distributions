@@ -1,7 +1,7 @@
 
 //Change for unassigned users
-const daysOutFree = 260;
-const daysOutBonus = 6;
+const daysOutFree = 60;
+const daysOutBonus = 6
 
 //AUM threshold
 const AUM_BUCKET = 125000;
@@ -12,20 +12,21 @@ const aumGreaterThan = (aum, amount) => {
 const aumLessThan = (aum, amount) => {
   return aum <= amount;
 }
-const aumComparisonType = aumLessThan;
-const aumUserCount = 6;
+const aumComparisonType = aumGreaterThan;
+const aumUserCount = 6
+;
 
 //distance of user to advisor
 const tier1 = 25;
-const tier2 = 75;
-const tier3 = 100;
-const tier4 = 275;
+const tier2 = 100;
+const tier3 = 225;
+const tier4 = 450;
 
 //percentage of users distances to advisor
 const pctTier1 = 0.35;
 const pctTier2 = 0.55;
-const pctTier3 = 0.55;
-const pctTier4 = 0.75;
+const pctTier3 = 0.75;
+const pctTier4 = 0.85;
 const pctTier5 = 1.00;
 
 module.exports = {

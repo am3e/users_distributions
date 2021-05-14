@@ -12,8 +12,8 @@ const calculateDistances = (users, advisors) => {
       distance: getDistanceFromLatLonInKm(
         user.Lat,
         user.Long,
-        advisor.Lat,
-        advisor.Long
+        advisor.lat,
+        advisor.long
       ),
     }))
     .sort(

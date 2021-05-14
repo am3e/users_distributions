@@ -41,18 +41,18 @@ const loadFile = (path) => {
 
 const generateAll = async (currentDate) => {
   const [advisors, users] = await Promise.all([
-    loadFile(`csv/all/${currentDate.toISODate()}-${Country.Code}-advisor_users.csv`),
+    loadFile(`csv/all/${currentDate.toISODate()}-${Country.Needs}`),
     loadFile(`csv/all/${Country.Code}_inventory.csv`),
   ]);
   const [userAssignmentsMarketing, advisorUsersMarketing, userDistancesMarketing, distancesMarketing, unfulfilledAdvisorsMarketing] = assignUsers(
     users.filter(user => user["Type"] === "Marketing"),
     advisors,
-    "MarketingUsers"
+    "marketing"
   );
   const [userAssignmentsBonus, advisorUsersBonus, userDistancesBonus, distancesBonus, unfulfilledAdvisorsBonus] = assignUsers(
     users.filter(user => user["Type"] === "Bonus"),
     advisors,
-    "BonusUsers"
+    "bonus"
   );
   const userAssignments = {...userAssignmentsMarketing, ...userAssignmentsBonus};
   const advisorUsers = Object.fromEntries(advisors.map(advisor => {
@@ -101,8 +101,9 @@ const generateAll = async (currentDate) => {
   unfulfilledAdvisors.map(advisor => {
     const users = advisorUsers[advisor["referral_code"]];
     const fulfilled = users ? users.length : 0;
-    if (advisor['TotalUsers'] - fulfilled > 0) {
-      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, "\x1b[41m" + (advisor['TotalUsers'] - fulfilled || 0) + "\x1b[0m", (advisor['MarketingUsers']), (advisor['BonusUsers'])].join(","));
+    const totalUsers = parseInt(advisor['marketing']) + parseInt(advisor['bonus']);
+    if (totalUsers - fulfilled > 0) {
+      console.log([advisor['referral_code'], advisor[Country.Columns.Region.title],fulfilled, "\x1b[41m" + (totalUsers - fulfilled || 0) + "\x1b[0m", (advisor['marketing']), (advisor['bonus'])].join(","));
     } 
   });
   console.log("");

@@ -12,6 +12,7 @@ const US = {
     "2021-01-01": "New Years Day",
   },
   Copy: "Households notification",
+  Needs: "assignments.csv",
   Columns: {
     Code: { id: "postal_code", title: "Zip" },
     Region: { id: "State", title: "State" },
@@ -63,9 +64,11 @@ const Canada = {
 
   },
   Copy: "New Planswell Households",
+  Needs: "assignments.csv",
   Columns: {
     Code: { id: "postal_code", title: "postal_code" },
     Region: { id: "Province", title: "Province" },
+    RegionA: { id: "Province", title: "province" },
     PhoneRegion: { id: "PhoneProvince", title: "PhoneProvince" },
   },
   Scrub: {

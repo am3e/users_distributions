@@ -24,8 +24,8 @@ const advisorHeaders = [
   { id: "referral_code", title: "referral_code" },
   { id: "First name", title: "First name" },
   { id: "Recipient", title: "Recipient" },
-  { id: "MarketingUsers", title: "MarketingUsers" },
-  { id: "BonusUsers", title: "BonusUsers" },
+  { id: "MarketingUsers", title: "marketing" },
+  { id: "BonusUsers", title: "bonus" },
   { id: "assigned_marketing_this_period", title: "assigned_marketing_this_period" },
   { id: "assigned_bonus_this_period", title: "assigned_bonus_this_period" },
   { id: "Copy", title: "Copy" },
@@ -36,8 +36,8 @@ const advisorHeaders = [
   { id: "stripe_created_at", title: "stripe_created_at" },
 
   { id: "upper", title: "Region Code" },
-  { id: "Lat", title: "Lat" },
-  { id: "Long", title: "Long" },
+  { id: "Lat", title: "lat" },
+  { id: "Long", title: "long" },
 ];
 
 
@@ -118,6 +118,11 @@ const generateAdvisorUsers = async (currentDate, advisors, scrub) => {
         const differenceRequiredUsersIssue = remainingUsers > 10 && difference > 23 ;
         const differenceRequiredUsers = differenceRequiredUsersIssue ?  remainingUsers : 0 ;
 
+        if ([advisor["subscribed_leads"]] == 50 && [advisor["referral_code"]] === "adv-ryan-5") {
+          console.log(`****${[advisor["subscribed_leads"]]}, ${[advisor["referral_code"]]}`);
+          advisor["subscribed_leads"] = 150;
+          console.log(`****${[advisor["subscribed_leads"]]}, ${[advisor["referral_code"]]}`);
+        };
         if (differenceInPaymentDaysIssue) {
           console.log("\x1b[42m",`Payment issue: ${differenceInPaymentDays} for ${advisor["referral_code"]}`,"\x1b[0m");
         }
@@ -216,8 +221,8 @@ const generateAll = async () => {
   // generateRegionUsers(today, overrideAdvisors, scrub);
   //generateRegionPromoUsers(today, overrideAdvisors, scrub);
 
-  // const tomorrow = today.plus({days:1});
-  // generateAdvisorUsers(tomorrow, overrideAdvisors, scrub);
+  //const tomorrow = today.plus({days:1});
+  //generateAdvisorUsers(tomorrow, overrideAdvisors, scrub);
 };
 
 generateAll();
